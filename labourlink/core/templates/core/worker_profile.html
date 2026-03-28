@@ -1,0 +1,73 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<section class="panel reveal">
+    <h2>Create Worker Profile</h2>
+    <form method="post" class="form-grid">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="register_worker">
+        {{ worker_form.as_p }}
+        <button class="btn btn-primary" type="submit">Save Worker</button>
+    </form>
+</section>
+
+<section class="panel reveal">
+    <h2>Select Worker</h2>
+    <form method="get" class="inline-form">
+        <select name="worker">
+            {% for listed_worker in workers %}
+            <option value="{{ listed_worker.id }}" {% if listed_worker.id == selected_worker_id %}selected{% endif %}>{{ listed_worker.name }} ({{ listed_worker.primary_skill }})</option>
+            {% endfor %}
+        </select>
+        <button class="btn btn-soft" type="submit">Load Profile</button>
+    </form>
+</section>
+
+{% if worker %}
+<section class="profile-header reveal">
+    <div>
+        <p class="eyebrow">Worker Profile</p>
+        <h1>{{ worker.name }}</h1>
+        <p>{{ worker.primary_skill }} | {{ worker.location }} | {{ worker.phone }}</p>
+    </div>
+    <div class="rating-badge">
+        <h2>{{ worker.avg_rating }}</h2>
+        <p>Average Rating</p>
+        <small>{{ worker.jobs_completed }} verified jobs</small>
+    </div>
+</section>
+
+<section class="section-title reveal">
+    <h2>Built Through Work</h2>
+    <p>No self-written claims. Every entry below comes from completed jobs and contractor feedback.</p>
+</section>
+
+<section class="timeline reveal stagger">
+    {% for item in history %}
+    <article class="timeline-item">
+        <div class="timeline-item-head">
+            <h3>{{ item.job }}</h3>
+            <span>{{ item.date }}</span>
+        </div>
+        <p class="subtle">Posted by {{ item.contractor }} | Rating: {{ item.rating }}/5</p>
+        <p>{{ item.note }}</p>
+        <div class="tag-row">
+            {% for endorsement in item.endorsements %}
+            <span class="chip">{{ endorsement }}</span>
+            {% endfor %}
+        </div>
+    </article>
+    {% empty %}
+    <article class="timeline-item">
+        <h3>No verified jobs yet</h3>
+        <p>Once this worker completes and gets rated on jobs, entries will appear here.</p>
+    </article>
+    {% endfor %}
+</section>
+{% else %}
+<section class="section-title reveal">
+    <h2>No worker selected</h2>
+    <p>Create a new worker profile or select an existing one to view work history.</p>
+</section>
+{% endif %}
+{% endblock %}

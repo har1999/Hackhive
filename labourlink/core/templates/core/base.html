@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabourLink | Verified Work Histories</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <div class="site-shell">
+        <header class="topbar">
+            <a href="{% url 'core:home' %}" class="brand">
+                <span class="brand-mark">LL</span>
+                <span>
+                    <strong>LabourLink</strong>
+                    <small>Built Through Work</small>
+                </span>
+            </a>
+            <nav class="topnav">
+                <a href="{% url 'core:job_board' %}">Jobs</a>
+                <a href="{% url 'core:worker_profile' %}">Worker Profile</a>
+                <a href="{% url 'core:contractor_dashboard' %}">Contractor Dashboard</a>
+                <a href="{% url 'core:voice_ui' %}">Voice UI</a>
+            </nav>
+        </header>
+
+        {% if messages %}
+        <section class="flash-wrap">
+            {% for message in messages %}
+            <div class="flash {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </section>
+        {% endif %}
+
+        <main class="page-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

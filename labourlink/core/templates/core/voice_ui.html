@@ -1,0 +1,38 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<section class="section-title reveal">
+    <p class="eyebrow">Low-Literacy Interface</p>
+    <h1>Tap, speak, and confirm</h1>
+    <p>This screen demonstrates icon-first and voice-guided actions for workers who prefer audio prompts over reading text.</p>
+</section>
+
+<section class="icon-grid reveal stagger">
+    <button class="icon-card">
+        <span>[MIC]</span>
+        <strong>Hear Jobs</strong>
+        <small>Play nearby job alerts</small>
+    </button>
+    <button class="icon-card">
+        <span>[OK]</span>
+        <strong>Accept Job</strong>
+        <small>Confirm with one tap</small>
+    </button>
+    <button class="icon-card">
+        <span>[LOC]</span>
+        <strong>Update Location</strong>
+        <small>Refresh matching radius</small>
+    </button>
+    <button class="icon-card">
+        <span>[RATE]</span>
+        <strong>My Ratings</strong>
+        <small>Listen to latest feedback</small>
+    </button>
+</section>
+
+<section class="voice-banner reveal">
+    <h3>Voice Prompt</h3>
+    <p>"Two mason jobs near you. First job starts today, rate 900 rupees per day. Press green button to accept."</p>
+    <p class="subtle">Live network: {{ workers }} workers, {{ open_jobs }} open jobs</p>
+</section>
+{% endblock %}

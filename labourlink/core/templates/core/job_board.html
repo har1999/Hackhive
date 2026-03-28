@@ -1,0 +1,53 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<section class="section-title reveal">
+    <p class="eyebrow">Jobs Near You</p>
+    <h1>{{ selected_skill }} jobs within {{ radius_km }} km</h1>
+    <p>Filter by skill, daily rate, urgency, and distance. Jobs are visibility-scoped and same-day alerts are prioritized.</p>
+</section>
+
+<section class="filter-bar reveal">
+    <a class="chip" href="?">All</a>
+    <a class="chip" href="?skill=Mason">Mason</a>
+    <a class="chip" href="?skill=Electrician">Electrician</a>
+    <a class="chip" href="?skill=Painter">Painter</a>
+    <a class="chip" href="?skill=Labourer">Labourer</a>
+    <a class="chip chip-warn" href="?urgent=1{% if selected_skill != 'All Skills' %}&skill={{ selected_skill }}{% endif %}">Urgent only</a>
+</section>
+
+<section class="cards-grid reveal stagger">
+    {% for job in jobs %}
+    <article class="job-card">
+        <div class="between">
+            <h3>{{ job.title }}</h3>
+            {% if job.urgent_same_day %}
+            <span class="chip chip-warn">Same Day</span>
+            {% endif %}
+        </div>
+        <p>{{ job.location }} | {{ job.radius_km }} km radius</p>
+        <div class="job-meta">
+            <span>{{ job.skill_required }}</span>
+            <span>{{ job.duration_days }} day(s)</span>
+            <span>Rs {{ job.daily_rate }}/day</span>
+            <span>{{ job.workers_needed }} worker(s)</span>
+        </div>
+        <form method="post" class="form-grid compact">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="apply">
+            <input type="hidden" name="job_id" value="{{ job.id }}">
+            {{ job.apply_form.worker.label_tag }}
+            {{ job.apply_form.worker }}
+            <div class="job-actions">
+                <button class="btn btn-primary" type="submit">Apply</button>
+            </div>
+        </form>
+    </article>
+    {% empty %}
+    <article class="job-card">
+        <h3>No matching jobs right now</h3>
+        <p>Try another skill filter or remove urgent-only filter.</p>
+    </article>
+    {% endfor %}
+</section>
+{% endblock %}
