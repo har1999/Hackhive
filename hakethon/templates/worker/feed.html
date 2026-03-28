@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% block title %}Job Feed — KaamSetu{% endblock %}
+{% block body_class %}page-with-bottom-nav{% endblock %}
+{% block body %}
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="/" class="navbar-brand">🏗️ <span>KaamSetu</span></a>
+  <div class="navbar-actions">
+    <button class="voice-btn" title="Voice Control 🎤">🎤</button>
+    <a href="/worker/profile/" class="nav-link">👤</a>
+    <form method="POST" action="/auth/logout/" style="margin:0;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:white;">Exit</button>
+    </form>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:1.25rem;">
+
+  <!-- Welcome -->
+  <div style="margin-bottom:1.25rem;">
+    <h1 style="font-size:1.4rem;">
+      नमस्ते, {{ request.user.name }} 👋
+    </h1>
+    <p style="color:var(--concrete);font-size:0.88rem;">Jobs near you today</p>
+  </div>
+
+  <!-- Messages -->
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{% if msg.tags == 'error' %}error{% else %}success{% endif %}">{{ msg }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- SKILL FILTER ROW (icons only) -->
+  <div style="overflow-x:auto;padding-bottom:0.5rem;margin-bottom:1.25rem;">
+    <div style="display:flex;gap:0.6rem;min-width:max-content;">
+      {% for val, label in skill_choices %}
+      <a href="?skill={{ val }}"
+         style="display:flex;flex-direction:column;align-items:center;gap:0.2rem;
+                padding:0.6rem 0.9rem;border-radius:var(--radius-sm);
+                background:{% if val == selected_skill %}var(--orange){% else %}white{% endif %};
+                color:{% if val == selected_skill %}white{% else %}var(--concrete){% endif %};
+                box-shadow:var(--shadow-sm);text-decoration:none;flex-shrink:0;
+                border:2px solid {% if val == selected_skill %}var(--orange){% else %}transparent{% endif %};">
+        <span style="font-size:1.5rem;">
+          {% if val == 'mason' %}🧱{% elif val == 'electrician' %}⚡{% elif val == 'plumber' %}🔧
+          {% elif val == 'painter' %}🎨{% elif val == 'carpenter' %}🪚{% elif val == 'labourer' %}👷
+          {% elif val == 'welder' %}🔥{% elif val == 'tiler' %}⬜{% elif val == 'fabricator' %}⚙️
+          {% else %}🏗️{% endif %}
+        </span>
+        <span style="font-size:0.65rem;font-weight:700;text-align:center;">{{ label|truncatechars:8 }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- JOB CARDS GRID -->
+  {% if jobs %}
+  <div class="jobs-grid">
+    {% for job in jobs %}
+    <div class="job-card {% if job.is_urgent %}urgent{% else %}normal{% endif %}">
+
+      {% if job.is_urgent %}
+        <div class="urgent-badge">🚨 URGENT</div>
+      {% endif %}
+
+      {% if job.id in applied_ids %}
+        <div class="applied-badge">✅ Applied</div>
+      {% endif %}
+
+      <div class="job-card-skill">
+        {% if job.skill_category == 'mason' %}🧱{% elif job.skill_category == 'electrician' %}⚡
+        {% elif job.skill_category == 'plumber' %}🔧{% elif job.skill_category == 'painter' %}🎨
+        {% elif job.skill_category == 'carpenter' %}🪚{% elif job.skill_category == 'labourer' %}👷
+        {% elif job.skill_category == 'welder' %}🔥{% elif job.skill_category == 'tiler' %}⬜
+        {% else %}🏗️{% endif %}
+      </div>
+
+      <div class="job-card-rate">
+        ₹{{ job.daily_rate }}<span>/day</span>
+      </div>
+
+      <div class="job-card-location">
+        📍 {{ job.location_name|truncatechars:22 }}
+      </div>
+
+      <div style="text-align:center;font-size:0.75rem;color:var(--concrete);padding:0.2rem 0.5rem;">
+        {{ job.duration_days }} day{% if job.duration_days > 1 %}s{% endif %}
+        · {{ job.start_date }}
+      </div>
+
+      {% if job.distance_km %}
+      <div class="job-card-distance">📍 {{ job.distance_km }} km away</div>
+      {% endif %}
+
+      <!-- Contractor trust mini -->
+      <div style="text-align:center;font-size:0.72rem;color:var(--concrete);padding:0.3rem 0.5rem;">
+        by {{ job.contractor.name|truncatechars:16 }}
+      </div>
+
+      <div class="job-card-footer">
+        {% if job.id in applied_ids %}
+          <button class="btn btn-sm w-full" disabled style="background:var(--green-light);color:var(--green);">
+            ✅ Applied
+          </button>
+        {% else %}
+          <button class="btn btn-primary btn-sm w-full apply-btn"
+                  data-job-id="{{ job.id }}">
+            👆 Apply
+          </button>
+        {% endif %}
+        <button class="read-job-btn btn btn-sm w-full"
+                style="margin-top:0.4rem;background:#f5f5f4;color:var(--concrete);">
+          🔊 Listen
+        </button>
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">🔍</div>
+    <h3>No jobs found nearby</h3>
+    <p>Try selecting a different skill or expanding your area</p>
+    <a href="/worker/setup/" class="btn btn-outline" style="margin-top:1rem;">
+      Update My Location
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <a href="/worker/feed/" class="bottom-nav-item active">
+    <span class="nav-icon">💼</span>
+    <span class="nav-label">Jobs</span>
+  </a>
+  <a href="/worker/my-jobs/" class="bottom-nav-item">
+    <span class="nav-icon">📋</span>
+    <span class="nav-label">My Work</span>
+  </a>
+  <a href="/worker/profile/" class="bottom-nav-item">
+    <span class="nav-icon">⭐</span>
+    <span class="nav-label">Profile</span>
+  </a>
+  <a href="/worker/setup/" class="bottom-nav-item">
+    <span class="nav-icon">⚙️</span>
+    <span class="nav-label">Settings</span>
+  </a>
+</nav>
+
+{% endblock %}

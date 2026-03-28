@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — KaamSetu Contractor{% endblock %}
+{% block body %}
+
+<nav class="navbar">
+  <a href="/contractor/dashboard/" class="navbar-brand">🏗️ <span>KaamSetu</span></a>
+  <div class="navbar-actions">
+    <a href="/contractor/post-job/" class="btn btn-primary btn-sm">+ Post Job</a>
+    <form method="POST" action="/auth/logout/" style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" class="your-logout-button-classes">Logout</button>
+</form>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:1.5rem;padding-bottom:3rem;">
+
+  <!-- HEADER -->
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:2rem;">
+    <div>
+      <h1 style="font-size:1.8rem;">Welcome, {{ request.user.name }} 👷‍♂️</h1>
+      <p style="color:var(--concrete);font-size:0.88rem;">Contractor Dashboard</p>
+    </div>
+    <!-- Own rating — bidirectional accountability -->
+    {% if profile.average_rating %}
+    <div style="background:white;border-radius:var(--radius);padding:1rem 1.5rem;box-shadow:var(--shadow-sm);text-align:center;">
+      <div style="font-size:0.75rem;color:var(--concrete);font-weight:600;">Your Rating</div>
+      <div style="font-family:var(--font-display);font-size:1.8rem;font-weight:800;color:var(--amber);">
+        ⭐ {{ profile.average_rating }}
+      </div>
+      <div style="font-size:0.72rem;color:var(--concrete);">from workers</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Messages -->
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-success">✅ {{ msg }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card accent">
+      <div class="number">{{ active_jobs.count }}</div>
+      <div class="label">Active Jobs</div>
+    </div>
+    <div class="stat-card">
+      <div class="number" style="color:var(--green);">{{ profile.total_workers_hired }}</div>
+      <div class="label">Workers Hired</div>
+    </div>
+    <div class="stat-card">
+      <div class="number" style="color:#7c3aed;">{{ profile.total_jobs_posted }}</div>
+      <div class="label">Jobs Posted</div>
+    </div>
+    <div class="stat-card">
+      <div class="number" style="color:var(--amber);">{{ favourite_workers.count }}</div>
+      <div class="label">Favourites</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 380px;gap:2rem;align-items:start;">
+    <div>
+
+      <!-- ACTIVE JOBS -->
+      <div class="section-header">
+        <h2>📋 Active Job Postings</h2>
+        <a href="/contractor/post-job/" class="btn btn-primary btn-sm">+ New Job</a>
+      </div>
+
+      {% if active_jobs %}
+      <div style="display:flex;flex-direction:column;gap:1rem;margin-bottom:2rem;">
+        {% for job in active_jobs %}
+        <div class="card">
+          <div class="card-body">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;">
+              <div>
+                <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                  <h3 style="font-size:1rem;">{{ job.title }}</h3>
+                  {% if job.is_urgent %}
+                    <span class="badge badge-red">🚨 URGENT</span>
+                  {% endif %}
+                  <span class="badge badge-gray">{{ job.get_skill_category_display }}</span>
+                </div>
+                <div style="font-size:0.82rem;color:var(--concrete);margin-top:0.3rem;">
+                  📍 {{ job.location_name }} · ₹{{ job.daily_rate }}/day · {{ job.duration_days }} day{% if job.duration_days > 1 %}s{% endif %}
+                </div>
+                <div style="font-size:0.78rem;color:var(--concrete);">
+                  Start: {{ job.start_date }} · {{ job.workers_needed }} worker{% if job.workers_needed > 1 %}s{% endif %} needed
+                </div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;">
+                <div style="font-family:var(--font-display);font-size:1.5rem;font-weight:800;color:var(--orange);">
+                  {{ job.app_count }}
+                </div>
+                <div style="font-size:0.72rem;color:var(--concrete);">applicants</div>
+              </div>
+            </div>
+            <div style="margin-top:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+              <a href="/contractor/job/{{ job.id }}/applicants/" class="btn btn-primary btn-sm">
+                👥 View Applicants
+              </a>
+              <span class="badge badge-{% if job.status == 'open' %}green{% else %}orange{% endif %}" style="display:flex;align-items:center;">
+                {{ job.get_status_display }}
+              </span>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state" style="background:white;border-radius:var(--radius);padding:2.5rem;">
+        <div class="icon">📋</div>
+        <h3>No active jobs</h3>
+        <p>Post your first job to find skilled workers</p>
+        <a href="/contractor/post-job/" class="btn btn-primary" style="margin-top:1rem;">Post a Job →</a>
+      </div>
+      {% endif %}
+
+      <!-- RECENT HIRES -->
+      {% if recent_hires %}
+      <div class="section-header" style="margin-top:2rem;">
+        <h2>🤝 Recent Hires</h2>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Worker</th><th>Job</th><th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for eng in recent_hires %}
+            <tr>
+              <td>
+                <div style="font-weight:600;">{{ eng.worker.name }}</div>
+                <div style="font-size:0.75rem;color:var(--concrete);">{{ eng.worker.phone }}</div>
+              </td>
+              <td>
+                <div>{{ eng.job.title }}</div>
+                <div style="font-size:0.75rem;color:var(--concrete);">{{ eng.started_at|date:"d M Y" }}</div>
+              </td>
+              <td>
+                {% if eng.status == 'completed' %}
+                  <span class="badge badge-green">✅ Done</span>
+                {% else %}
+                  <span class="badge badge-orange">🔧 Active</span>
+                {% endif %}
+              </td>
+              <td>
+                <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+                  <a href="/worker/profile/{{ eng.worker.id }}/" class="btn btn-sm btn-outline">Profile</a>
+                  {% if eng.status == 'completed' %}
+                    <a href="/ratings/rate/{{ eng.id }}/" class="btn btn-sm btn-primary">Rate</a>
+                  {% else %}
+                    <button class="btn btn-sm btn-success" onclick="markComplete({{ eng.id }})">✓ Done</button>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- SIDEBAR -->
+    <div>
+
+      <!-- FAVOURITE WORKERS -->
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-header">
+          <h2 style="font-size:1rem;">❤️ Favourite Workers</h2>
+          <span style="font-size:0.78rem;color:var(--concrete);">{{ favourite_workers.count }}</span>
+        </div>
+        <div class="card-body">
+          {% if favourite_workers %}
+          <div style="display:flex;flex-direction:column;gap:0.75rem;">
+            {% for fav in favourite_workers %}
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+              <div style="width:40px;height:40px;border-radius:50%;background:var(--orange-light);
+                          display:flex;align-items:center;justify-content:center;
+                          font-weight:800;color:var(--orange-dark);font-size:1rem;flex-shrink:0;">
+                {{ fav.worker.name|slice:":1"|upper }}
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:600;font-size:0.9rem;">{{ fav.worker.name }}</div>
+                {% if fav.worker.worker_profile.skill_category %}
+                <div style="font-size:0.75rem;color:var(--concrete);">
+                  {{ fav.worker.worker_profile.get_skill_category_display }}
+                </div>
+                {% endif %}
+              </div>
+              <div style="display:flex;gap:0.3rem;">
+                <a href="/worker/profile/{{ fav.worker.id }}/" class="btn btn-sm btn-outline">View</a>
+                <button class="fav-btn btn btn-sm" data-worker-id="{{ fav.worker.id }}" style="background:#fee2e2;">❤️</button>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div style="text-align:center;padding:1.5rem;color:var(--concrete);font-size:0.85rem;">
+            <div style="font-size:2rem;margin-bottom:0.5rem;">🤍</div>
+            No favourites yet.<br>Mark workers as favourites from their profile.
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- QUICK POST -->
+      <div class="card">
+        <div style="background:var(--orange);padding:1rem 1.25rem;border-radius:var(--radius) var(--radius) 0 0;">
+          <h2 style="color:white;font-size:1rem;">⚡ Need a worker today?</h2>
+        </div>
+        <div class="card-body">
+          <p style="font-size:0.85rem;color:var(--concrete);margin-bottom:1rem;">
+            Post an urgent job and we'll SMS all available workers in your area immediately.
+          </p>
+          <a href="/contractor/post-job/?urgent=1" class="btn btn-danger btn-block">
+            🚨 Post Urgent Job
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+function markComplete(engId) {
+  if (!confirm('Mark this job as complete?')) return;
+  fetch(`/jobs/complete/${engId}/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+  }).then(() => location.reload());
+}
+</script>
+
+{% endblock %}

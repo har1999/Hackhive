@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Setup Profile — KaamSetu{% endblock %}
+{% block body_class %}page-with-bottom-nav{% endblock %}
+{% block body %}
+<nav class="navbar">
+  <a href="/" class="navbar-brand">🏗️ <span>KaamSetu</span></a>
+</nav>
+<div class="container-sm" style="padding-top:2rem;">
+  <h1 style="font-size:1.5rem;margin-bottom:0.25rem;">⚙️ My Settings</h1>
+  <p style="color:var(--concrete);font-size:0.88rem;margin-bottom:1.5rem;">Set your skill and location to see the right jobs</p>
+
+  <form method="POST">
+    {% csrf_token %}
+    <div class="card" style="margin-bottom:1.25rem;">
+      <div style="padding:1.25rem 1.5rem;border-bottom:1px solid #f0ede9;">
+        <label class="form-label" style="font-size:1rem;margin-bottom:0.75rem;">My Primary Skill</label>
+        <div class="skill-grid">
+          {% for val, label in skill_choices %}
+          <div class="skill-option">
+            <input type="radio" name="skill_category" id="s_{{ val }}" value="{{ val }}"
+                   {% if profile.skill_category == val %}checked{% endif %}>
+            <label for="s_{{ val }}">
+              <span class="icon">{% if val == 'mason' %}🧱{% elif val == 'electrician' %}⚡{% elif val == 'plumber' %}🔧{% elif val == 'painter' %}🎨{% elif val == 'carpenter' %}🪚{% elif val == 'labourer' %}👷{% elif val == 'welder' %}🔥{% elif val == 'tiler' %}⬜{% else %}🏗️{% endif %}</span>
+              <span class="name">{{ label }}</span>
+            </label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div style="padding:1.25rem 1.5rem;">
+        <div class="form-group">
+          <label class="form-label">📍 My Area / Location</label>
+          <input type="text" name="location_name" class="form-control" value="{{ profile.location_name }}" placeholder="e.g. Dharavi, Mumbai">
+        </div>
+        <input type="hidden" name="latitude" id="lat" value="{{ profile.latitude }}">
+        <input type="hidden" name="longitude" id="lng" value="{{ profile.longitude }}">
+        <button type="button" class="btn btn-outline btn-block" id="geoBtn">📍 Use My Location</button>
+        <div class="form-group" style="margin-top:1.25rem;">
+          <label class="form-label">Job Search Radius: <span id="rv">{{ profile.preferred_radius_km|default:15 }}km</span></label>
+          <input type="range" name="radius" min="2" max="50" value="{{ profile.preferred_radius_km|default:15 }}"
+                 oninput="document.getElementById('rv').textContent=this.value+'km'"
+                 style="width:100%;accent-color:var(--orange);">
+        </div>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary btn-block btn-lg">Save Settings ✓</button>
+  </form>
+</div>
+
+<nav class="bottom-nav">
+  <a href="/worker/feed/" class="bottom-nav-item"><span class="nav-icon">💼</span><span class="nav-label">Jobs</span></a>
+  <a href="/worker/my-jobs/" class="bottom-nav-item"><span class="nav-icon">📋</span><span class="nav-label">My Work</span></a>
+  <a href="/worker/profile/" class="bottom-nav-item"><span class="nav-icon">⭐</span><span class="nav-label">Profile</span></a>
+  <a href="/worker/setup/" class="bottom-nav-item active"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></a>
+</nav>
+<script>
+document.getElementById('geoBtn').addEventListener('click', function() {
+  this.textContent = '📍 Getting...';
+  navigator.geolocation.getCurrentPosition(p => {
+    document.getElementById('lat').value = p.coords.latitude;
+    document.getElementById('lng').value = p.coords.longitude;
+    this.textContent = '✅ Location Set';
+    this.style.background = 'var(--green)'; this.style.color = 'white';
+  }, () => { this.textContent = '📍 Could not get location'; });
+});
+</script>
+{% endblock %}

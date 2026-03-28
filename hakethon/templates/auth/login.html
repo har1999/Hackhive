@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% block title %}Login — KaamSetu{% endblock %}
+{% block body_class %}hero-page{% endblock %}
+{% block body %}
+<div class="hero">
+  <div class="hero-content" style="width:100%;">
+    <div class="container-sm" style="padding-top:2rem;padding-bottom:2rem;">
+
+      <!-- Brand -->
+      <div style="text-align:center;margin-bottom:2.5rem;">
+        <div style="font-size:4rem;margin-bottom:0.5rem;">🏗️</div>
+        <h1 style="font-family:var(--font-display);font-size:3rem;font-weight:800;color:var(--orange);line-height:1;">
+          KaamSetu
+        </h1>
+        <p style="color:rgba(255,255,255,0.6);margin-top:0.5rem;font-size:1.05rem;">
+          Trusted Work. Verified Skills. Real Opportunity.
+        </p>
+        <p style="color:rgba(255,255,255,0.4);font-size:0.85rem;margin-top:0.3rem;">
+          विश्वास पर बना — काम के ज़रिए
+        </p>
+      </div>
+
+      <!-- Login Card -->
+      <div style="background:white;border-radius:var(--radius);box-shadow:var(--shadow-lg);overflow:hidden;">
+
+        {% if not otp_sent %}
+        <!-- STEP 1: Phone + Role -->
+        <div style="background:var(--orange);padding:1.25rem 1.5rem;">
+          <h2 style="color:white;font-size:1.2rem;">👷 Get Started</h2>
+          <p style="color:rgba(255,255,255,0.8);font-size:0.85rem;margin-top:0.2rem;">
+            Enter your phone number — no password needed
+          </p>
+        </div>
+
+        <div style="padding:1.75rem;">
+          {% if messages %}
+            {% for msg in messages %}
+              <div class="alert alert-{{ msg.tags }}">⚠️ {{ msg }}</div>
+            {% endfor %}
+          {% endif %}
+
+          <form method="POST">
+            {% csrf_token %}
+
+            <!-- Role Selection — large icons, no reading required -->
+            <div class="form-group">
+              <label class="form-label" style="font-size:1rem;margin-bottom:0.75rem;">I am a...</label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <label style="cursor:pointer;">
+                  <input type="radio" name="role" value="worker" checked style="display:none;" class="role-radio">
+                  <div class="role-card" data-role="worker" style="border:3px solid var(--orange);background:var(--orange-light);border-radius:var(--radius);padding:1.5rem 1rem;text-align:center;transition:all 0.15s;">
+                    <div style="font-size:3rem;">👷</div>
+                    <div style="font-weight:700;margin-top:0.5rem;font-family:var(--font-display);">Worker</div>
+                    <div style="font-size:0.75rem;color:var(--concrete);margin-top:0.2rem;">मज़दूर / कारीगर</div>
+                  </div>
+                </label>
+                <label style="cursor:pointer;">
+                  <input type="radio" name="role" value="contractor" style="display:none;" class="role-radio">
+                  <div class="role-card" data-role="contractor" style="border:3px solid #e7e5e4;background:#fafaf9;border-radius:var(--radius);padding:1.5rem 1rem;text-align:center;transition:all 0.15s;">
+                    <div style="font-size:3rem;">🏢</div>
+                    <div style="font-weight:700;margin-top:0.5rem;font-family:var(--font-display);">Contractor</div>
+                    <div style="font-size:0.75rem;color:var(--concrete);margin-top:0.2rem;">ठेकेदार</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">📛 Your Name</label>
+              <input type="text" name="name" class="form-control" placeholder="Enter your name"
+                style="font-size:1.1rem;" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">📱 Mobile Number</label>
+              <input type="tel" name="phone" class="form-control" placeholder="10-digit mobile number"
+                pattern="[0-9]{10}" maxlength="10" inputmode="numeric" required
+                style="font-size:1.3rem;letter-spacing:0.1em;font-weight:600;text-align:center;">
+              <p style="font-size:0.78rem;color:var(--concrete);margin-top:0.4rem;">
+                📲 An OTP will be sent to this number
+              </p>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:0.5rem;">
+              📨 Send OTP
+            </button>
+          </form>
+        </div>
+
+        {% else %}
+        <!-- STEP 2: OTP Entry -->
+        <div style="background:var(--green);padding:1.25rem 1.5rem;">
+          <h2 style="color:white;font-size:1.2rem;">✅ OTP Sent!</h2>
+          <p style="color:rgba(255,255,255,0.85);font-size:0.88rem;margin-top:0.2rem;">
+            Enter the 6-digit code sent to {{ phone }}
+          </p>
+        </div>
+
+        <div style="padding:1.75rem;">
+          {% if messages %}
+            {% for msg in messages %}
+              <div class="alert alert-error">⚠️ {{ msg }}</div>
+            {% endfor %}
+          {% endif %}
+
+          {% if debug_otp %}
+          <div class="alert alert-info" style="font-size:1rem;justify-content:center;">
+            🔐 Debug OTP: <strong style="font-size:1.3rem;letter-spacing:0.15em;margin-left:0.5rem;">{{ debug_otp }}</strong>
+          </div>
+          {% endif %}
+
+          <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="phone" value="{{ phone }}">
+
+            <div class="form-group" style="text-align:center;">
+              <label class="form-label" style="font-size:1.1rem;">Enter OTP</label>
+              <input type="text" name="otp" class="form-control otp-input"
+                placeholder="• • • • • •"
+                maxlength="6" inputmode="numeric" autocomplete="one-time-code"
+                style="font-size:2.5rem;letter-spacing:0.4em;text-align:center;font-weight:800;height:72px;">
+            </div>
+
+            <button type="submit" class="btn btn-success btn-block btn-lg">
+              🔓 Verify & Enter
+            </button>
+
+            <div style="text-align:center;margin-top:1rem;">
+              <a href="/auth/login/" style="color:var(--concrete);font-size:0.85rem;">
+                ← Change number
+              </a>
+            </div>
+          </form>
+        </div>
+        {% endif %}
+
+      </div>
+
+      <!-- Trust indicators -->
+      <div style="display:flex;justify-content:center;gap:2rem;margin-top:2rem;flex-wrap:wrap;">
+        <div style="text-align:center;color:rgba(255,255,255,0.5);font-size:0.78rem;">
+          <div style="font-size:1.4rem;">🔒</div>No password
+        </div>
+        <div style="text-align:center;color:rgba(255,255,255,0.5);font-size:0.78rem;">
+          <div style="font-size:1.4rem;">✅</div>Verified jobs
+        </div>
+        <div style="text-align:center;color:rgba(255,255,255,0.5);font-size:0.78rem;">
+          <div style="font-size:1.4rem;">⭐</div>Real ratings
+        </div>
+        <div style="text-align:center;color:rgba(255,255,255,0.5);font-size:0.78rem;">
+          <div style="font-size:1.4rem;">🇮🇳</div>Made for India
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// Role card toggle
+document.querySelectorAll('.role-radio').forEach(radio => {
+  radio.addEventListener('change', function() {
+    document.querySelectorAll('.role-card').forEach(card => {
+      card.style.borderColor = '#e7e5e4';
+      card.style.background = '#fafaf9';
+    });
+    const card = this.nextElementSibling;
+    card.style.borderColor = 'var(--orange)';
+    card.style.background = 'var(--orange-light)';
+  });
+});
+</script>
+{% endblock %}
