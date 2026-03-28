@@ -1,0 +1,23 @@
+"""
+KaamSetu URL Configuration
+"""
+from django.contrib import admin
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('auth/', include('accounts.urls')),
+    path('worker/', include('workers.urls')),
+    path('contractor/', include('contractors.urls')),
+    path('jobs/', include('jobs.urls')),
+    path('ratings/', include('ratings.urls')),
+    path('', include('core.urls')),
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# Also wire contractor endorse under ratings
