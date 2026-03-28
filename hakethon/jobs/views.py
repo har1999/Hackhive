@@ -19,7 +19,7 @@ def haversine_filter(jobs, lat, lng, radius_km):
     for job in jobs:
         dist = job.distance_from(lat, lng)
         if dist <= radius_km:
-            job.distance_km = round(dist, 1)
+            job._distance_km = round(dist, 1)
             result.append(job)
     result.sort(key=lambda j: j._distance_km)
     return result
@@ -34,12 +34,11 @@ def worker_job_feed(request):
     if not request.user.is_worker:
         return redirect('/contractor/dashboard/')
 
-    profile, _ = WorkerProfile.objects.get_or_create(user=request.user)
-
-    lat = request.GET.get('lat') or profile.latitude
-    lng = request.GET.get('lng') or profile.longitude
-    skill = request.GET.get('skill') or profile.skill_category
-    radius = int(request.GET.get('radius') or profile.preferred_radius_km or 15)
+    user = request.user
+    lat = request.GET.get('lat') or user.latitude
+    lng = request.GET.get('lng') or user.longitude
+    skill = user.primary_skill
+    radius = int(request.GET.get('radius') or 20)
 
     jobs_qs = Job.objects.filter(
         status='open',
@@ -63,7 +62,6 @@ def worker_job_feed(request):
         'skill_choices': SKILL_CHOICES,
         'selected_skill': skill,
         'applied_ids': applied_ids,
-        'profile': profile,
         'radius': radius,
     })
 

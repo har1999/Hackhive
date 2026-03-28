@@ -1,20 +1,18 @@
 """
-Auth Views — OTP-based login. No passwords. No email.
-Phone → OTP → JWT tokens → done.
+Auth Views — Password-based login & signup.
 """
 import logging
-from django.contrib.auth import get_user_model, login, logout
+from django.contrib.auth import get_user_model, login, logout, authenticate
 from django.shortcuts import render, redirect
 from django.views import View
 from django.contrib import messages
+from django.urls import reverse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import OTP
-from .serializers import OTPRequestSerializer, OTPVerifySerializer, UserSerializer
-from notifications.sms import send_otp_sms
+from .serializers import LoginSerializer, UserSerializer
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -22,11 +20,11 @@ User = get_user_model()
 
 # ─── API VIEWS ────────────────────────────────────────────────────────────────
 
-class RequestOTPView(APIView):
+class DirectLoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = OTPRequestSerializer(data=request.data)
+        serializer = LoginSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -34,57 +32,7 @@ class RequestOTPView(APIView):
         name = serializer.validated_data.get('name', '')
         role = serializer.validated_data.get('role', 'worker')
 
-        otp = OTP.generate(phone)
-        send_otp_sms(phone, otp.code)
-
-        # Create user if first time
-        user, created = User.objects.get_or_create(
-            phone=phone,
-            defaults={'name': name, 'role': role}
-        )
-        if created:
-            if role == 'worker':
-                from workers.models import WorkerProfile
-                WorkerProfile.objects.get_or_create(user=user)
-            else:
-                from contractors.models import ContractorProfile
-                ContractorProfile.objects.get_or_create(user=user)
-
-        return Response({
-            'message': f'OTP sent to {phone}',
-            'debug_otp': otp.code if __import__('django.conf', fromlist=['settings']).settings.DEBUG else None
-        }, status=status.HTTP_200_OK)
-
-
-class VerifyOTPView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        serializer = OTPVerifySerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        phone = serializer.validated_data['phone']
-        code = serializer.validated_data['code']
-
-        try:
-            otp_obj = OTP.objects.filter(phone=phone, is_used=False).latest('created_at')
-        except OTP.DoesNotExist:
-            return Response({'error': 'No OTP found. Request a new one.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        otp_obj.attempts += 1
-        otp_obj.save()
-
-        if not otp_obj.is_valid:
-            return Response({'error': 'OTP expired or too many attempts.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if otp_obj.code != code:
-            return Response({'error': 'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        otp_obj.is_used = True
-        otp_obj.save()
-
-        user = User.objects.get(phone=phone)
+        user, created = User.objects.get_or_create_with_profile(phone=phone, name=name, role=role)
         user.is_verified = True
         user.save()
 
@@ -98,61 +46,71 @@ class VerifyOTPView(APIView):
 
 # ─── TEMPLATE VIEWS ───────────────────────────────────────────────────────────
 
+class SignupPageView(View):
+    def get(self, request):
+        return render(request, 'auth/signup.html', {'skills': User.SKILL_CHOICES})
+
+    def post(self, request):
+        data = request.POST
+        try:
+            user = User.objects.create_user(
+                phone=data.get('phone'),
+                password=data.get('password'),
+                name=data.get('name'),
+                role=data.get('role'),
+                primary_skill=data.get('primary_skill'),
+                location_name=data.get('location_name'),
+                latitude=float(data.get('latitude', 0)),
+                longitude=float(data.get('longitude', 0))
+            )
+            login(request, user)
+            return redirect('worker_feed' if user.is_worker else 'contractor_dashboard')
+        except Exception as e:
+            messages.error(request, f"Error creating account: {e}")
+            return render(request, 'auth/signup.html', {'skills': User.SKILL_CHOICES})
+
 class LoginPageView(View):
     def get(self, request):
         if request.user.is_authenticated:
-            return redirect('/' if request.user.is_contractor else '/worker/feed/')
+            return redirect(reverse('contractor_dashboard') if request.user.is_contractor else reverse('worker_feed'))
         return render(request, 'auth/login.html')
 
     def post(self, request):
         phone = request.POST.get('phone', '').strip()
-        otp_code = request.POST.get('otp', '').strip()
-        name = request.POST.get('name', '').strip()
-        role = request.POST.get('role', 'worker')
+        password = request.POST.get('password', '').strip()
 
-        if not otp_code:
-            # Step 1: Request OTP
-            if not phone:
-                messages.error(request, 'Phone number required')
-                return render(request, 'auth/login.html')
-            otp = OTP.generate(phone)
-            send_otp_sms(phone, otp.code)
-            user, created = User.objects.get_or_create(
-                phone=phone, defaults={'name': name, 'role': role}
-            )
-            if created:
-                if role == 'worker':
-                    from workers.models import WorkerProfile
-                    WorkerProfile.objects.get_or_create(user=user)
-                else:
-                    from contractors.models import ContractorProfile
-                    ContractorProfile.objects.get_or_create(user=user)
-            return render(request, 'auth/login.html', {'otp_sent': True, 'phone': phone, 'debug_otp': otp.code})
-        else:
-            # Step 2: Verify OTP
-            try:
-                otp_obj = OTP.objects.filter(phone=phone, is_used=False).latest('created_at')
-                otp_obj.attempts += 1
-                otp_obj.save()
-                if otp_obj.is_valid and otp_obj.code == otp_code:
-                    otp_obj.is_used = True
-                    otp_obj.save()
-                    user = User.objects.get(phone=phone)
-                    user.is_verified = True
-                    user.save()
-                    login(request, user, backend='accounts.backends.PhoneAuthBackend')
-                    if user.is_contractor:
-                        return redirect('/contractor/dashboard/')
-                    return redirect('/worker/feed/')
-                else:
-                    messages.error(request, 'Invalid or expired OTP')
-                    return render(request, 'auth/login.html', {'otp_sent': True, 'phone': phone})
-            except OTP.DoesNotExist:
-                messages.error(request, 'No OTP found')
-                return render(request, 'auth/login.html')
+        user = authenticate(request, username=phone, password=password)
+        if user:
+            login(request, user)
+            return redirect(reverse('contractor_dashboard') if user.is_contractor else reverse('worker_feed'))
+        
+        messages.error(request, 'Invalid phone number or password')
+        return render(request, 'auth/login.html')
 
 
 class LogoutView(View):
     def post(self, request):
         logout(request)
-        return redirect('/auth/login/')
+        return redirect(reverse('login'))
+from django.shortcuts import render
+from django.views import View
+
+from django.shortcuts import render, redirect
+from django.views import View
+
+class SignupPageView(View):
+    # 1. This handles loading the page normally
+    def get(self, request):
+        return render(request, 'auth/signup.html')
+
+    # 2. ADD THIS: This handles the form submission
+    def post(self, request):
+        # Here is where you will eventually save the user to the database.
+        # For example, getting the data from the form:
+        # phone = request.POST.get('phone')
+        # password = request.POST.get('password')
+        
+        print("Form submitted with data:", request.POST) # Prints to your terminal
+        
+        # After successfully signing up, redirect the user to the login page
+        return redirect('login')

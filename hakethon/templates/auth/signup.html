@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h1 class="brand-title">Kaam<span>Setu</span></h1>
+        <p class="auth-subtitle">Create your account to start building trust.</p>
+        
+        <form method="POST" class="auth-form">
+            {% csrf_token %}
+            <input type="text" name="name" placeholder="Full Name" required>
+            <input type="tel" name="phone" placeholder="Phone Number" required>
+            <input type="password" name="password" placeholder="Create Password" required>
+            
+            <div class="role-selector">
+                <label><input type="radio" name="role" value="worker" checked> Worker</label>
+                <label><input type="radio" name="role" value="contractor"> Contractor</label>
+            </div>
+
+            <select name="primary_skill" id="skill-select">
+                <option value="">Select Primary Skill (Workers only)</option>
+                {% for code, label in skills %}
+                <option value="{{ code }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+
+            <div class="location-box">
+                <input type="text" name="location_name" placeholder="Your Area/City" required>
+                <button type="button" data-get-location class="loc-btn">📍 Get GPS</button>
+                <input type="hidden" name="latitude" id="lat">
+                <input type="hidden" name="longitude" id="lng">
+            </div>
+
+            <button type="submit" class="btn-primary">Create Account</button>
+        </form>
+        <p class="auth-footer">Already have an account? <a href="{% url 'login' %}">Login</a></p>
+    </div>
+</div>
+
+<style>
+    .auth-container { display: flex; justify-content: center; align-items: center; min-height: 90vh; background: #f3f4f6; }
+    .auth-card { background: white; padding: 2.5rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 400px; text-align: center; }
+    .brand-title { color: #374151; font-weight: 800; font-size: 2rem; }
+    .brand-title span { color: #f97316; }
+    .auth-subtitle { color: #6b7280; margin-bottom: 2rem; }
+    .auth-form input, .auth-form select { width: 100%; padding: 0.8rem; margin-bottom: 1rem; border: 1px solid #e5e7eb; border-radius: 10px; }
+    .role-selector { display: flex; gap: 1rem; justify-content: center; margin-bottom: 1rem; font-weight: 600; color: #4b5563; }
+    .btn-primary { width: 100%; background: #f97316; color: white; padding: 1rem; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+    .btn-primary:hover { background: #ea580c; }
+    .location-box { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .loc-btn { background: #4b5563; color: white; border: none; border-radius: 10px; padding: 0 1rem; cursor: pointer; white-space: nowrap; }
+</style>
+{% endblock %}

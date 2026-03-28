@@ -217,18 +217,6 @@ function showToast(msg, type = 'info') {
   setTimeout(() => toast.remove(), 3000);
 }
 
-// ─── OTP AUTO-SUBMIT ─────────────────────────────────────────
-const otpInput = document.querySelector('.otp-input');
-if (otpInput) {
-  otpInput.addEventListener('input', function() {
-    this.value = this.value.replace(/\D/g, '').slice(0, 6);
-    if (this.value.length === 6) {
-      setTimeout(() => this.closest('form')?.submit(), 200);
-    }
-  });
-  otpInput.focus();
-}
-
 // ─── URGENT JOB PULSE ────────────────────────────────────────
 document.querySelectorAll('.job-card.urgent').forEach(card => {
   card.style.animation = 'urgentPulse 2s infinite';

@@ -121,6 +121,14 @@ class JobApplication(models.Model):
         unique_together = [('job', 'worker')]
         ordering = ['-applied_at']
 
+    def hire(self):
+        if self.status != self.STATUS_HIRED and self.job.workers_needed > 0:
+            self.status = self.STATUS_HIRED
+            self.hired_at = timezone.now()
+            self.job.workers_needed -= 1
+            self.job.save()
+            self.save()
+
     def __str__(self):
         return f"{self.worker.name} → {self.job.title} [{self.status}]"
 

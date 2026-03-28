@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="profile-header">
+    <div class="profile-main">
+        <h1>{{ target_user.name }}</h1>
+        <div class="badge-row">
+            <span class="badge skill">{{ target_user.get_primary_skill_display }}</span>
+            <span class="badge location">📍 {{ target_user.location_name }}</span>
+        </div>
+        <p class="phone-display">📞 {{ target_user.phone }}</p>
+    </div>
+</div>
+
+<div class="history-section">
+    <h2>Verified Work History</h2>
+    
+    {% if not completed_engagements %}
+        <div class="empty-state">
+            <p>New to KaamSetu — No jobs completed yet.</p>
+        </div>
+    {% else %}
+        <div class="timeline">
+            {% for eng in completed_engagements %}
+            <div class="timeline-item">
+                <div class="job-meta">
+                    <h3>{{ eng.job.title }}</h3>
+                    <p class="date">{{ eng.completed_at|date:"M Y" }} • Hired by {{ eng.contractor.name }}</p>
+                </div>
+                
+                <div class="rating-display">
+                    {% with rating=eng.ratings.first %}
+                        <div class="stars">{"⭐"|repeat:rating.score}</div>
+                        <p class="note">"{{ rating.note }}"</p>
+                    {% endwith %}
+                </div>
+
+                <div class="endorsements">
+                    {% for endo in eng.endorsements.all %}
+                        <span class="endo-tag">✓ {{ endo.tag_label }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .profile-header { background: white; padding: 2rem; border-bottom: 1px solid #e5e7eb; margin-bottom: 2rem; text-align: center; }
+    .badge-row { display: flex; justify-content: center; gap: 0.5rem; margin: 1rem 0; }
+    .badge { padding: 0.4rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.85rem; }
+    .badge.skill { background: #fff7ed; color: #f97316; border: 1px solid #ffedd5; }
+    .endo-tag { background: #f0fdf4; color: #16a34a; padding: 0.2rem 0.6rem; border-radius: 5px; font-size: 0.8rem; margin-right: 0.5rem; }
+</style>
+{% endblock %}
