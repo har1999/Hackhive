@@ -10,13 +10,16 @@ const NAV_ITEMS = [
 
 export const BottomNav = () => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 mx-auto flex max-w-md justify-around border-t border-slate-300 bg-white py-2">
+    <nav className="glass-strip fixed bottom-3 left-3 right-3 z-40 mx-auto flex max-w-md justify-around rounded-2xl px-1 py-2 shadow-lg">
       {NAV_ITEMS.map((item) => (
         <NavLink
           key={item.path}
           to={item.path}
           className={({ isActive }) =>
-            clsx('touch-target-48 flex w-20 flex-col items-center justify-center rounded-md text-xs', isActive && 'bg-slate-100 font-bold text-worker-primary')
+            clsx(
+              'touch-target-48 flex w-20 flex-col items-center justify-center rounded-xl text-xs font-semibold text-slate-600 transition-all',
+              isActive && 'bg-worker-primary text-white shadow-md'
+            )
           }
         >
           <span aria-hidden="true">{item.icon}</span>

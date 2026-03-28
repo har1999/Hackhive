@@ -17,17 +17,17 @@ export const VoiceFab = () => {
   }
 
   return (
-    <div className="fixed bottom-20 right-4 z-30">
+    <div className="fixed bottom-24 right-4 z-30">
       <button
         aria-label="Start voice assistant"
-        className="touch-target-48 rounded-full bg-worker-primary px-5 py-4 text-xl text-white shadow-panel"
+        className="touch-target-48 voice-ping rounded-full border-4 border-white bg-worker-primary px-5 py-4 text-xl text-white shadow-panel"
         onClick={handleClick}
         type="button"
       >
         🎤
       </button>
       {message ? (
-        <p aria-live="polite" className="mt-2 rounded-md bg-black/80 px-3 py-2 text-xs text-white">
+        <p aria-live="polite" className="rise-in mt-2 rounded-md bg-black/80 px-3 py-2 text-xs text-white">
           {message}
         </p>
       ) : null}

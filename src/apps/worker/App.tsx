@@ -11,7 +11,7 @@ const VoiceAssistantScreen = lazy(() => import('./routes/VoiceAssistantScreen'))
 
 export default function WorkerApp() {
   return (
-    <div className="min-h-screen bg-transparent">
+    <div className="worker-shell">
       <Suspense fallback={<div className="page-loader">Loading worker app...</div>}>
         <Routes>
           <Route path="/" element={<HomeScreen />} />

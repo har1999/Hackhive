@@ -5,17 +5,18 @@ const workers = [
 
 export default function Favorites() {
   return (
-    <main className="p-6">
-      <h1 className="mb-4 text-2xl font-black text-contractor-primary">Favorite Workers</h1>
+    <main className="px-6 pb-10 pt-6">
+      <h1 className="mb-1 text-3xl font-black tracking-tight text-contractor-primary">Favorite Workers</h1>
+      <p className="mb-4 text-sm text-slate-600">Your trusted workers with one-tap rehire.</p>
       <div className="grid gap-3 md:grid-cols-2">
         {workers.map((worker) => (
-          <article key={worker.id} className="card-surface p-4">
-            <p className="font-bold">⭐ {worker.name}</p>
-            <p>{worker.skill}</p>
+          <article key={worker.id} className="card-surface rise-in p-4">
+            <p className="font-black">⭐ {worker.name}</p>
+            <p className="text-sm text-slate-600">{worker.skill}</p>
             <p className={`text-sm ${worker.available ? 'text-green-700' : 'text-slate-500'}`}>
               {worker.available ? 'Available now' : 'Busy'}
             </p>
-            <button type="button" className="touch-target-48 mt-2 rounded-lg bg-contractor-primary px-3 py-2 text-white">
+            <button type="button" className="touch-target-48 mt-3 rounded-lg bg-gradient-to-r from-contractor-primary to-blue-500 px-3 py-2 font-bold text-white">
               Rehire
             </button>
           </article>

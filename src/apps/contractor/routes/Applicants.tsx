@@ -5,17 +5,18 @@ const applicants = [
 
 export default function Applicants() {
   return (
-    <main className="p-6">
-      <h1 className="mb-4 text-2xl font-black text-contractor-primary">Applicants</h1>
-      <div className="overflow-x-auto rounded-xl border border-slate-300 bg-white">
+    <main className="px-6 pb-10 pt-6">
+      <h1 className="mb-1 text-3xl font-black tracking-tight text-contractor-primary">Applicants</h1>
+      <p className="mb-4 text-sm text-slate-600">Sort by trust score, distance, and expected wage to hire faster.</p>
+      <div className="card-surface rise-in overflow-x-auto rounded-xl">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-50">
+          <thead className="bg-slate-100">
             <tr>
-              <th className="p-3">Worker</th>
-              <th className="p-3">Trust Score</th>
-              <th className="p-3">Distance</th>
-              <th className="p-3">Expected Wage</th>
-              <th className="p-3">Actions</th>
+              <th className="p-3 text-xs uppercase tracking-wide text-slate-500">Worker</th>
+              <th className="p-3 text-xs uppercase tracking-wide text-slate-500">Trust Score</th>
+              <th className="p-3 text-xs uppercase tracking-wide text-slate-500">Distance</th>
+              <th className="p-3 text-xs uppercase tracking-wide text-slate-500">Expected Wage</th>
+              <th className="p-3 text-xs uppercase tracking-wide text-slate-500">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -30,9 +31,9 @@ export default function Applicants() {
                 <td className="p-3">₹{applicant.wage}/day</td>
                 <td className="p-3">
                   <div className="flex gap-2">
-                    <button type="button" className="touch-target-48 rounded bg-green-600 px-3 py-1 text-xs text-white">Hire</button>
-                    <button type="button" className="touch-target-48 rounded bg-amber-500 px-3 py-1 text-xs text-white">Shortlist</button>
-                    <button type="button" className="touch-target-48 rounded bg-red-600 px-3 py-1 text-xs text-white">Reject</button>
+                    <button type="button" className="touch-target-48 rounded bg-green-600 px-3 py-1 text-xs font-bold text-white">Hire</button>
+                    <button type="button" className="touch-target-48 rounded bg-amber-500 px-3 py-1 text-xs font-bold text-white">Shortlist</button>
+                    <button type="button" className="touch-target-48 rounded bg-red-600 px-3 py-1 text-xs font-bold text-white">Reject</button>
                   </div>
                 </td>
               </tr>

@@ -1,4 +1,15 @@
 export const resources = {
+  en: {
+    translation: {
+      'app.name': 'KaamSetu',
+      'job.search': 'Search Jobs',
+      'job.apply': 'Apply',
+      'trust.score': 'Trust Score',
+      'offline.message': 'You are offline. Your application will be sent later.',
+      'voice.retry': 'Please speak again',
+      'voice.search': 'Search work by voice',
+    },
+  },
   hi: {
     translation: {
       'app.name': 'KaamSetu',

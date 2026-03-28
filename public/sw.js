@@ -70,3 +70,6 @@ async function networkFirst(request, cacheName) {
     })
   }
 }
+
+localStorage.setItem('kaamsetu.language', 'ta') // hi | ta | te | mr
+location.reload()
