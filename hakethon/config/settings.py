@@ -1,13 +1,9 @@
-"""
-KaamSetu - Django Settings
-Production-grade configuration for hackathon + beyond
-"""
-
 import os
 from pathlib import Path
 from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 SECRET_KEY = 'django-insecure-kaamsetu-hackathon-2025-change-in-prod-immediately'
 DEBUG = True
 ALLOWED_HOSTS = ['*']
@@ -51,7 +47,7 @@ AUTH_USER_MODEL = 'accounts.User'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -73,7 +69,6 @@ DATABASES = {
     }
 }
 
-# --- THIS IS THE SECTION THAT WAS FIXED ---
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]

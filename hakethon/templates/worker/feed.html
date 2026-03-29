@@ -1,167 +1,128 @@
-"""
-Jobs Views - KaamSetu
-"""
-import math
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.utils import timezone
-from django.db.models import Avg, Count, Q
-from django.db import transaction
-from django.http import JsonResponse
-from .models import Job, JobApplication, JobEngagement, SKILL_CHOICES
-from workers.models import WorkerProfile
+$content = @'
+{% extends 'base.html' %}
+{% block title %}Find Work - KaamSetu{% endblock %}
 
+{% block content %}
 
-def haversine_filter(jobs, lat, lng, radius_km):
-    result = []
-    for job in jobs:
-        dist = job.distance_from(lat, lng)
-        if dist <= radius_km:
-            job.distance_km = round(dist, 1)
-            result.append(job)
-    result.sort(key=lambda j: j.distance_km)
-    return result
+<div class="max-w-2xl mx-auto px-4 py-6 pb-24">
 
+  <div class="flex justify-between items-center mb-5">
+    <h1 class="text-2xl font-extrabold text-gray-900">Find Work</h1>
+  </div>
 
-@login_required
-def worker_job_feed(request):
-    if not request.user.is_worker:
-        return redirect('/contractor/dashboard/')
+  <form method="GET" class="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-wrap gap-3 items-end">
+    <div class="flex-1 min-w-0">
+      <label class="text-xs font-bold text-gray-500 mb-1 block">SKILL</label>
+      <select name="skill" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-orange-400">
+        {% for val, label in skill_choices %}
+        <option value="{{ val }}" {% if val == selected_skill %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="min-w-0">
+      <label class="text-xs font-bold text-gray-500 mb-1 block">RADIUS (km)</label>
+      <select name="radius" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-orange-400">
+        <option value="5" {% if radius == 5 %}selected{% endif %}>5 km</option>
+        <option value="10" {% if radius == 10 %}selected{% endif %}>10 km</option>
+        <option value="20" {% if radius == 20 %}selected{% endif %}>20 km</option>
+        <option value="50" {% if radius == 50 %}selected{% endif %}>50 km</option>
+      </select>
+    </div>
+    <button type="submit" class="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold text-sm transition">
+      Search
+    </button>
+  </form>
 
-    user = request.user
+  {% if jobs %}
+  <div class="flex flex-col gap-4">
+    {% for job in jobs %}
+    <div class="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
+      <div class="p-5">
+        <div class="flex justify-between items-start gap-3 flex-wrap">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap mb-1">
+              {% if job.is_urgent %}
+              <span class="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded-full">Urgent</span>
+              {% endif %}
+              <span class="px-2 py-0.5 bg-orange-50 text-orange-600 text-xs font-semibold rounded-full">{{ job.get_skill_category_display }}</span>
+            </div>
+            <div class="font-bold text-base text-gray-900">{{ job.title }}</div>
+            <div class="text-xs text-gray-500 mt-1">
+              {{ job.location_name }}{% if job.distance_km %} - {{ job.distance_km }} km away{% endif %}
+            </div>
+            <div class="text-xs text-gray-400 mt-0.5">by {{ job.contractor.name }} - {{ job.created_at|timesince }} ago</div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <div class="text-xl font-extrabold text-orange-500">Rs{{ job.daily_rate }}</div>
+            <div class="text-xs text-gray-400">/day</div>
+            <div class="text-xs text-gray-400 mt-1">{{ job.duration_days }} day{% if job.duration_days != 1 %}s{% endif %}</div>
+          </div>
+        </div>
 
-    skill  = request.GET.get('skill') or user.primary_skill
-    radius = int(request.GET.get('radius') or 20)
+        {% if job.description %}
+        <p class="text-sm text-gray-600 mt-3">{{ job.description }}</p>
+        {% endif %}
 
-    jobs_qs = Job.objects.filter(
-        status__in=['open', 'active'],
-        skill_category=skill
-    ).select_related('contractor').order_by('-is_urgent', '-created_at')
+        <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
+          <div class="text-xs text-gray-400">{{ job.workers_needed }} worker{% if job.workers_needed != 1 %}s{% endif %} needed</div>
+          {% if job.id in applied_ids %}
+          <span class="px-4 py-2 bg-gray-100 text-gray-500 rounded-xl text-sm font-bold">Applied</span>
+          {% else %}
+          <button onclick="applyToJob({{ job.id }}, this)"
+            class="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold text-sm transition">
+            Apply Now
+          </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
 
-    applied_ids = set(
-        JobApplication.objects.filter(worker=user).values_list('job_id', flat=True)
-    )
+  {% else %}
+  <div class="bg-white rounded-2xl shadow-sm p-12 text-center">
+    <h3 class="text-lg font-bold mb-1">No jobs found nearby</h3>
+    <p class="text-gray-500 text-sm">Try increasing the radius or changing your skill filter</p>
+  </div>
+  {% endif %}
 
-    lat = user.latitude
-    lng = user.longitude
+</div>
 
-    if lat and lng:
-        nearby_jobs = haversine_filter(list(jobs_qs), float(lat), float(lng), radius)
-    else:
-        nearby_jobs = list(jobs_qs[:50])
-        for j in nearby_jobs:
-            j.distance_km = None
+<nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-2 z-50">
+  <a href="/worker/feed/" class="flex flex-col items-center text-orange-500 text-xs font-bold">
+    <span class="text-xl">W</span><span>Jobs</span>
+  </a>
+  <a href="/worker/my-jobs/" class="flex flex-col items-center text-gray-400 hover:text-orange-500 text-xs font-semibold transition">
+    <span class="text-xl">M</span><span>My Work</span>
+  </a>
+  <a href="/jobs/profile/{{ request.user.id }}/" class="flex flex-col items-center text-gray-400 hover:text-orange-500 text-xs font-semibold transition">
+    <span class="text-xl">P</span><span>Profile</span>
+  </a>
+</nav>
 
-    return render(request, 'worker/feed.html', {
-        'jobs': nearby_jobs,
-        'skill_choices': SKILL_CHOICES,
-        'selected_skill': skill,
-        'applied_ids': applied_ids,
-        'radius': radius,
-    })
+<script>
+function applyToJob(jobId, btn) {
+  btn.disabled = true;
+  btn.textContent = 'Applying...';
+  fetch('/jobs/apply/' + jobId + '/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      btn.textContent = 'Applied';
+      btn.classList.remove('bg-orange-500');
+      btn.classList.add('bg-gray-100', 'text-gray-500');
+    } else {
+      btn.textContent = data.error || 'Error';
+      btn.disabled = false;
+    }
+  })
+  .catch(() => { btn.textContent = 'Error'; btn.disabled = false; });
+}
+</script>
 
-
-@login_required
-def apply_to_job(request, job_id):
-    if request.method != 'POST':
-        return JsonResponse({'error': 'POST required'}, status=405)
-
-    job = get_object_or_404(Job, id=job_id, status__in=['open', 'active'])
-
-    hired_count = job.applications.filter(status='hired').count()
-    if hired_count >= job.workers_needed:
-        return JsonResponse({'error': 'No spots left for this job'}, status=400)
-
-    app, created = JobApplication.objects.get_or_create(
-        job=job, worker=request.user,
-        defaults={'status': 'pending'}
-    )
-    if not created:
-        return JsonResponse({'error': 'You have already applied to this job'}, status=400)
-
-    return JsonResponse({'success': True, 'message': 'Applied successfully!'})
-
-
-@login_required
-def worker_my_jobs(request):
-    if not request.user.is_worker:
-        return redirect('/contractor/dashboard/')
-
-    applications = JobApplication.objects.filter(
-        worker=request.user
-    ).select_related('job', 'job__contractor').order_by('-applied_at')
-
-    engagements = JobEngagement.objects.filter(
-        worker=request.user
-    ).select_related('job', 'contractor').prefetch_related(
-        'ratings', 'endorsements'
-    ).order_by('-started_at')
-
-    return render(request, 'worker/my_jobs.html', {
-        'applications': applications,
-        'engagements': engagements,
-    })
-
-
-@login_required
-def worker_profile_view(request, user_id=None):
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-
-    if user_id:
-        target_user = get_object_or_404(User, id=user_id, role='worker')
-    else:
-        target_user = request.user
-
-    profile, _ = WorkerProfile.objects.get_or_create(user=target_user)
-
-    completed_engagements = JobEngagement.objects.filter(
-        worker=target_user, status='completed'
-    ).select_related('job', 'contractor').prefetch_related(
-        'ratings', 'endorsements'
-    ).order_by('-completed_at')
-
-    ratings_received = target_user.ratings_received.all().order_by('-created_at')
-
-    endorsements = target_user.endorsements_received.select_related(
-        'contractor', 'engagement__job'
-    ).order_by('-created_at')
-
-    return render(request, 'worker/honest_profile.html', {
-        'profile': profile,
-        'target_user': target_user,
-        'completed_engagements': completed_engagements,
-        'ratings': ratings_received,
-        'endorsements': endorsements,
-        'is_own_profile': target_user == request.user,
-    })
-
-
-@login_required
-def mark_job_complete(request, engagement_id):
-    if request.method != 'POST':
-        return redirect('/')
-
-    engagement = get_object_or_404(JobEngagement, id=engagement_id)
-
-    if request.user == engagement.worker:
-        engagement.worker_marked_complete = True
-        engagement.save()
-    elif request.user == engagement.contractor:
-        engagement.contractor_marked_complete = True
-        engagement.save()
-    else:
-        messages.error(request, 'Not authorized.')
-        return redirect('/')
-
-    completed = engagement.check_and_complete()
-
-    if completed:
-        messages.success(request, 'Job marked complete! Please rate your experience.')
-    else:
-        messages.info(request, 'Marked as complete on your end. Waiting for the other party to confirm.')
-
-    if request.user.is_worker:
-        return redirect('/worker/my-jobs/')
-    return redirect(f'/contractor/job/{engagement.job_id}/applicants/')
+{% endblock %}
+'@
+[System.IO.File]::WriteAllText('D:\hakethon\Hackhive\hakethon\templates\worker\feed.html', $content, [System.Text.Encoding]::UTF8)
