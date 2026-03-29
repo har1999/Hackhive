@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,19 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}KaamSetu{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Smooth scrolling and basic resets */
-        html { scroll-behavior: smooth; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    </style>
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col font-sans">
 
     <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <a href="/" class="text-2xl font-bold text-gray-900">
+                    <a href="/" class="text-2xl font-extrabold text-gray-900 tracking-tight">
                         Kaam<span class="text-orange-500">Setu</span>
                     </a>
                 </div>
@@ -25,32 +21,32 @@
                 <div class="flex items-center space-x-4">
                     {% if user.is_authenticated %}
                         {% if user.is_worker %}
-                            <a href="{% url 'worker_feed' %}" class="text-gray-600 hover:text-orange-500 font-medium">Find Work</a>
-                            <a href="{% url 'honest_profile' user.id %}" class="text-gray-600 hover:text-orange-500 font-medium">My Profile</a>
+                            <a href="{% url 'worker_feed' %}" class="text-gray-600 hover:text-orange-500 font-bold transition">Find Work</a>
+                            <a href="{% url 'honest_profile' user.id %}" class="text-gray-600 hover:text-orange-500 font-bold transition">My Profile</a>
                         {% elif user.is_contractor %}
-                            <a href="{% url 'contractor_dashboard' %}" class="text-gray-600 hover:text-orange-500 font-medium">Dashboard</a>
+                            <a href="{% url 'contractor_dashboard' %}" class="text-gray-600 hover:text-orange-500 font-bold transition">Dashboard</a>
                         {% endif %}
                         
-                        <form method="POST" action="{% url 'logout' %}" class="inline">
+                        <form method="POST" action="{% url 'logout' %}" class="inline m-0 p-0">
                             {% csrf_token %}
-                            <button type="submit" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold transition">
+                            <button type="submit" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-xl text-sm font-bold transition">
                                 Logout
                             </button>
                         </form>
                     {% else %}
-                        <a href="{% url 'login' %}" class="text-gray-600 hover:text-orange-500 font-medium">Log in</a>
-                        <a href="{% url 'signup' %}" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">Sign up</a>
+                        <a href="{% url 'login' %}" class="text-gray-600 hover:text-orange-500 font-bold transition">Log in</a>
+                        <a href="{% url 'signup' %}" class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded-xl text-sm font-bold transition shadow-sm">Sign up</a>
                     {% endif %}
                 </div>
             </div>
         </div>
     </nav>
 
-    <main class="flex-grow w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
+    <main class="flex-grow w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 mt-4">
         {% if messages %}
             <div class="mb-6">
                 {% for message in messages %}
-                    <div class="p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800 border-l-4 border-green-500{% elif message.tags == 'error' %}bg-red-100 text-red-800 border-l-4 border-red-500{% else %}bg-blue-100 text-blue-800 border-l-4 border-blue-500{% endif %}">
+                    <div class="p-4 rounded-xl font-bold shadow-sm {% if message.tags == 'success' %}bg-green-100 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-100 text-red-800 border border-red-200{% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
                         {{ message }}
                     </div>
                 {% endfor %}

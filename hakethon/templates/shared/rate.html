@@ -68,7 +68,7 @@
         <div class="ratee-avatar">{{ ratee.name|slice:":1"|upper }}</div>
         <div class="ratee-name">{{ ratee.name }}</div>
         <div class="ratee-role">
-          {% if direction == 'contractor_to_worker' %}Worker{% else %}Contractor{% endif %}
+          {% if is_contractor %}Worker{% else %}Contractor{% endif %}
         </div>
       </div>
 
@@ -92,15 +92,15 @@
 
         <div class="form-field">
           <label>One-line note <span style="font-weight:400;color:#8a7060">(optional, max 280 chars)</span></label>
-          <input type="text" name="note" maxlength="280"
-                 placeholder="{% if direction == 'contractor_to_worker' %}e.g. Good mason, punctual, clean work{% else %}e.g. Paid on time, clear instructions{% endif %}">
+          <input type="text" name="review" maxlength="280"
+                 placeholder="{% if is_contractor %}e.g. Good mason, punctual, clean work{% else %}e.g. Paid on time, clear instructions{% endif %}">
         </div>
 
         <button type="submit" class="btn-submit" id="submitBtn">Submit Rating →</button>
       </form>
 
       <div class="skip-link">
-        <a href="{% if request.user.is_contractor %}/contractor/dashboard/{% else %}/worker/my-jobs/{% endif %}">
+        <a href="{% if is_contractor %}/contractor/dashboard/{% else %}/worker/my-jobs/{% endif %}">
           Skip for now
         </a>
       </div>
