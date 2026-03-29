@@ -9,7 +9,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('accounts.urls')),
-    path('worker/', include('workers.urls')),
+    path('worker/', include('jobs.urls')),
     path('contractor/', include('contractors.urls')),
     path('jobs/', include('jobs.urls')),
     path('ratings/', include('ratings.urls')),
@@ -19,5 +19,3 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-
-# Also wire contractor endorse under ratings

@@ -1,44 +1,74 @@
 {% extends 'base.html' %}
 {% block title %}Endorse Worker — KaamSetu{% endblock %}
-{% block body %}
-<nav class="navbar">
-  <a href="/" class="navbar-brand">🏗️ <span>KaamSetu</span></a>
-</nav>
-<div class="container-sm" style="padding-top:2rem;padding-bottom:3rem;">
-  <div class="card">
-    <div style="background:var(--green);padding:1.25rem 1.5rem;border-radius:var(--radius) var(--radius) 0 0;text-align:center;">
-      <div style="font-size:2.5rem;">🏅</div>
-      <h1 style="color:white;font-size:1.2rem;margin-top:0.4rem;">Endorse {{ engagement.worker.name }}</h1>
-      <p style="color:rgba(255,255,255,0.8);font-size:0.82rem;">For job: {{ engagement.job.title }}</p>
+{% block content %}
+
+<style>
+  .endorse-wrap { max-width: 520px; margin: 2rem auto; padding: 0 1rem 3rem; }
+  .endorse-card { background: white; border-radius: 20px; box-shadow: 0 4px 24px rgba(0,0,0,.08); overflow: hidden; }
+  .endorse-head { background: #16a34a; padding: 1.25rem 1.5rem; text-align: center; }
+  .endorse-head .ico { font-size: 2.2rem; }
+  .endorse-head h1 { color: white; font-size: 1.1rem; font-weight: 800; margin-top: .35rem; }
+  .endorse-head p { color: rgba(255,255,255,.75); font-size: .8rem; margin-top: .15rem; }
+  .endorse-body { padding: 1.5rem; }
+  .endorse-desc { font-size: .82rem; color: #44332a; margin-bottom: 1.25rem; line-height: 1.6; }
+  .endorse-list { display: flex; flex-direction: column; gap: .5rem; }
+  .endorse-item {
+    display: flex; align-items: center; gap: .875rem; cursor: pointer;
+    padding: .75rem .9rem; border: 1.5px solid #efe8df; border-radius: 12px;
+    background: #fffaf6; transition: all .15s; font-size: .875rem; font-weight: 600; color: #18120a;
+  }
+  .endorse-item:hover { border-color: #16a34a; background: #f0fdf4; }
+  .endorse-item input[type=checkbox] {
+    width: 18px; height: 18px; accent-color: #16a34a; cursor: pointer; flex-shrink: 0;
+  }
+  .endorse-item.checked { border-color: #16a34a; background: #f0fdf4; }
+  .btn-endorse {
+    width: 100%; padding: .85rem; background: #16a34a; color: white;
+    border: none; border-radius: 10px; font-size: .95rem; font-weight: 700;
+    cursor: pointer; transition: all .15s; margin-top: 1.5rem;
+  }
+  .btn-endorse:hover { background: #15803d; transform: translateY(-1px); }
+  .skip-link { text-align: center; margin-top: .75rem; }
+  .skip-link a { color: #8a7060; font-size: .82rem; text-decoration: none; }
+</style>
+
+<div class="endorse-wrap">
+  <div class="endorse-card">
+
+    <div class="endorse-head">
+      <div class="ico">🏅</div>
+      <h1>Endorse {{ engagement.worker.name }}</h1>
+      <p>For job: {{ engagement.job.title }}</p>
     </div>
-    <div class="card-body" style="padding:1.5rem;">
-      <p style="color:var(--concrete);font-size:0.88rem;margin-bottom:1.5rem;">
-        Select specific skills you <strong>observed during this job</strong>. These will appear on their profile linked to this engagement — not as generic praise.
+
+    <div class="endorse-body">
+      <p class="endorse-desc">
+        Select skills you <strong>actually observed</strong> during this job.
+        These appear on the worker's profile <strong>linked to this specific job</strong> — not as generic floating praise.
       </p>
+
       <form method="POST">
         {% csrf_token %}
-        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+        <div class="endorse-list">
           {% for val, label in endorsement_tags %}
-          <label style="display:flex;align-items:center;gap:1rem;cursor:pointer;padding:0.85rem 1rem;
-                        border:2px solid {% if val in existing_tags %}var(--green){% else %}#e7e5e4{% endif %};
-                        border-radius:var(--radius-sm);background:{% if val in existing_tags %}var(--green-light){% else %}#fafaf9{% endif %};
-                        transition:all 0.15s;"
-                 onclick="this.style.borderColor='var(--green)';this.style.background='var(--green-light)';">
+          <label class="endorse-item {% if val in existing_tags %}checked{% endif %}" id="lbl_{{ val }}">
             <input type="checkbox" name="tags" value="{{ val }}"
                    {% if val in existing_tags %}checked{% endif %}
-                   style="width:20px;height:20px;accent-color:var(--green);flex-shrink:0;">
-            <span style="font-size:0.9rem;font-weight:600;">✓ {{ label }}</span>
+                   onchange="this.closest('label').classList.toggle('checked',this.checked)">
+            {{ label }}
           </label>
           {% endfor %}
         </div>
-        <button type="submit" class="btn btn-success btn-block btn-lg" style="margin-top:1.5rem;">
-          🏅 Save Endorsements
-        </button>
-        <div style="text-align:center;margin-top:0.75rem;">
-          <a href="/contractor/dashboard/" style="color:var(--concrete);font-size:0.85rem;">Skip</a>
-        </div>
+
+        <button type="submit" class="btn-endorse">🏅 Save Endorsements</button>
       </form>
+
+      <div class="skip-link">
+        <a href="/contractor/dashboard/">Skip — I'll do this later</a>
+      </div>
     </div>
+
   </div>
 </div>
+
 {% endblock %}

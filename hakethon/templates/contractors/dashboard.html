@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+
+{% block title %}Contractor Dashboard — KaamSetu{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrap">
+
+  <!-- Header -->
+  <div class="dash-header">
+    <div>
+      <h1 class="dash-title">Welcome, {{ request.user.name }}</h1>
+      <p class="dash-sub">Manage your jobs, applicants and hired workers</p>
+    </div>
+    <div class="dash-header-right">
+      {% if contractor_rating %}
+        <div class="rating-badge">
+          <span class="star">★</span>
+          <span class="rating-val">{{ contractor_rating|floatformat:1 }}</span>
+          <span class="rating-label">Your Rating</span>
+        </div>
+      {% endif %}
+      <a href="{% url 'post_job' %}" class="btn-primary">+ Post New Job</a>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Active Jobs -->
+  <section class="dash-section">
+    <h2 class="section-title">Active Jobs <span class="badge">{{ active_jobs.count }}</span></h2>
+    {% if active_jobs %}
+      <div class="job-grid">
+        {% for job in active_jobs %}
+          <div class="job-card {% if job.is_urgent %}urgent{% endif %}">
+            {% if job.is_urgent %}
+              <span class="urgent-tag">🔴 URGENT</span>
+            {% endif %}
+            <div class="job-card-top">
+              <h3 class="job-title">{{ job.title }}</h3>
+              <span class="skill-pill">{{ job.skill_required|capfirst }}</span>
+            </div>
+            <div class="job-meta">
+              <span>📍 {{ job.location_name }}</span>
+              <span>📅 {{ job.duration_days }} day{{ job.duration_days|pluralize }}</span>
+              <span>💰 ₹{{ job.daily_rate }}/day</span>
+              <span>👷 {{ job.workers_needed }} needed</span>
+            </div>
+            <div class="job-card-footer">
+              <a href="{% url 'job_applicants' job.id %}" class="btn-outline">
+                View Applicants
+                {% if job.applicant_count > 0 %}
+                  <span class="count-dot">{{ job.applicant_count }}</span>
+                {% endif %}
+              </a>
+              <form method="post" action="{% url 'close_job' job.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger"
+                  onclick="return confirm('Close this job?')">Close Job</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <p>No active jobs. <a href="{% url 'post_job' %}">Post your first job →</a></p>
+      </div>
+    {% endif %}
+  </section>
+
+  <!-- Recent Hires -->
+  {% if recent_hires %}
+  <section class="dash-section">
+    <h2 class="section-title">Recent Hires</h2>
+    <div class="hires-table-wrap">
+      <table class="hires-table">
+        <thead>
+          <tr>
+            <th>Worker</th>
+            <th>Skill</th>
+            <th>Job</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for eng in recent_hires %}
+            <tr>
+              <td>
+                <a href="{% url 'honest_profile' eng.worker.id %}" class="worker-link">
+                  {{ eng.worker.name }}
+                </a>
+              </td>
+              <td><span class="skill-pill small">{{ eng.worker.primary_skill|capfirst }}</span></td>
+              <td>{{ eng.job.title }}</td>
+              <td>
+                <span class="status-pill status-{{ eng.status }}">{{ eng.status|capfirst }}</span>
+              </td>
+              <td>
+                {% if eng.status == 'completed' %}
+                  <a href="{% url 'rate_worker' eng.id %}" class="btn-small">Rate Worker</a>
+                {% else %}
+                  <span class="muted">Ongoing</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Favourite Workers -->
+  {% if favourites %}
+  <section class="dash-section">
+    <h2 class="section-title">Favourite Workers</h2>
+    <div class="fav-grid">
+      {% for fav in favourites %}
+        <div class="fav-card">
+          <div class="fav-avatar">{{ fav.worker.name|first|upper }}</div>
+          <div class="fav-info">
+            <a href="{% url 'honest_profile' fav.worker.id %}" class="worker-link">
+              {{ fav.worker.name }}
+            </a>
+            <span class="fav-skill">{{ fav.worker.primary_skill|capfirst }}</span>
+            {% with avg=fav.worker.worker_profile.average_rating %}
+              {% if avg %}
+                <span class="fav-rating">★ {{ avg|floatformat:1 }}</span>
+              {% endif %}
+            {% endwith %}
+          </div>
+          <form method="post" action="{% url 'toggle_favourite' fav.worker.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="contractor_dashboard">
+            <button type="submit" class="btn-unfav" title="Remove favourite">✕</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Past Jobs -->
+  {% if past_jobs %}
+  <section class="dash-section">
+    <h2 class="section-title">Past Jobs</h2>
+    <div class="past-list">
+      {% for job in past_jobs %}
+        <div class="past-job-row">
+          <div>
+            <span class="past-job-title">{{ job.title }}</span>
+            <span class="past-job-meta">{{ job.location_name }} · {{ job.skill_required|capfirst }}</span>
+          </div>
+          <span class="status-pill status-{{ job.status }}">{{ job.status|capfirst }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+</div>
+
+<style>
+.dashboard-wrap { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem; }
+
+.dash-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;
+}
+.dash-title { font-size: 1.8rem; font-weight: 700; margin: 0; }
+.dash-sub { color: #666; margin: 0.25rem 0 0; }
+.dash-header-right { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+
+.rating-badge {
+  display: flex; align-items: center; gap: 0.4rem;
+  background: #fff8e1; border: 1px solid #ffc107;
+  border-radius: 8px; padding: 0.4rem 0.8rem;
+}
+.rating-badge .star { color: #ffc107; font-size: 1.1rem; }
+.rating-val { font-weight: 700; font-size: 1.1rem; }
+.rating-label { font-size: 0.75rem; color: #888; }
+
+.btn-primary {
+  background: #1a73e8; color: #fff; padding: 0.55rem 1.2rem;
+  border-radius: 8px; text-decoration: none; font-weight: 600;
+  border: none; cursor: pointer; font-size: 0.95rem;
+}
+.btn-primary:hover { background: #1558b0; }
+
+.btn-outline {
+  border: 1.5px solid #1a73e8; color: #1a73e8; padding: 0.4rem 0.9rem;
+  border-radius: 7px; text-decoration: none; font-weight: 500; font-size: 0.88rem;
+  display: inline-flex; align-items: center; gap: 0.4rem;
+}
+.btn-outline:hover { background: #e8f0fe; }
+
+.btn-danger {
+  background: #fff; border: 1.5px solid #e53935; color: #e53935;
+  padding: 0.4rem 0.9rem; border-radius: 7px; cursor: pointer;
+  font-size: 0.88rem; font-weight: 500;
+}
+.btn-danger:hover { background: #fdecea; }
+
+.btn-small {
+  background: #e8f5e9; color: #2e7d32; padding: 0.3rem 0.7rem;
+  border-radius: 6px; text-decoration: none; font-size: 0.82rem; font-weight: 600;
+}
+.btn-small:hover { background: #c8e6c9; }
+
+.btn-unfav {
+  background: none; border: none; color: #aaa; cursor: pointer;
+  font-size: 1rem; padding: 0.2rem 0.4rem;
+}
+.btn-unfav:hover { color: #e53935; }
+
+.alert {
+  padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem;
+}
+.alert-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+.alert-error { background: #fdecea; color: #c62828; border: 1px solid #ef9a9a; }
+.alert-info { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+
+.dash-section { margin-bottom: 2.5rem; }
+.section-title {
+  font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.badge {
+  background: #1a73e8; color: #fff; font-size: 0.75rem;
+  padding: 0.15rem 0.5rem; border-radius: 20px;
+}
+
+.job-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+
+.job-card {
+  border: 1px solid #e0e0e0; border-radius: 12px;
+  padding: 1.1rem; background: #fff; position: relative;
+  transition: box-shadow 0.2s;
+}
+.job-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.09); }
+.job-card.urgent { border-color: #e53935; }
+
+.urgent-tag {
+  font-size: 0.72rem; font-weight: 700; color: #e53935;
+  display: block; margin-bottom: 0.4rem; letter-spacing: 0.05em;
+}
+
+.job-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.6rem; }
+.job-title { font-size: 1rem; font-weight: 700; margin: 0; }
+
+.skill-pill {
+  background: #e8f0fe; color: #1a73e8; font-size: 0.75rem;
+  padding: 0.2rem 0.6rem; border-radius: 20px; font-weight: 600; white-space: nowrap;
+}
+.skill-pill.small { font-size: 0.7rem; padding: 0.15rem 0.5rem; }
+
+.job-meta {
+  display: flex; flex-wrap: wrap; gap: 0.5rem 1rem;
+  font-size: 0.82rem; color: #555; margin-bottom: 0.9rem;
+}
+
+.job-card-footer { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+
+.count-dot {
+  background: #e53935; color: #fff; font-size: 0.7rem;
+  width: 18px; height: 18px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center; font-weight: 700;
+}
+
+.empty-state {
+  background: #f9f9f9; border: 1px dashed #ccc; border-radius: 10px;
+  padding: 2rem; text-align: center; color: #888;
+}
+.empty-state a { color: #1a73e8; }
+
+.hires-table-wrap { overflow-x: auto; }
+.hires-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.hires-table th {
+  text-align: left; padding: 0.6rem 0.8rem;
+  background: #f5f5f5; font-weight: 600; color: #444;
+}
+.hires-table td { padding: 0.6rem 0.8rem; border-bottom: 1px solid #f0f0f0; }
+.hires-table tr:hover td { background: #fafafa; }
+
+.worker-link { color: #1a73e8; text-decoration: none; font-weight: 500; }
+.worker-link:hover { text-decoration: underline; }
+
+.status-pill {
+  font-size: 0.75rem; padding: 0.2rem 0.6rem;
+  border-radius: 20px; font-weight: 600;
+}
+.status-active { background: #e8f5e9; color: #2e7d32; }
+.status-completed { background: #e3f2fd; color: #1565c0; }
+.status-closed { background: #f3e5f5; color: #6a1b9a; }
+
+.muted { color: #aaa; font-size: 0.82rem; }
+
+.fav-grid { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.fav-card {
+  display: flex; align-items: center; gap: 0.75rem;
+  border: 1px solid #e0e0e0; border-radius: 10px;
+  padding: 0.7rem 1rem; background: #fff; min-width: 220px;
+}
+.fav-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: #1a73e8; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 1rem; flex-shrink: 0;
+}
+.fav-info { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; }
+.fav-skill { font-size: 0.75rem; color: #888; }
+.fav-rating { font-size: 0.8rem; color: #f9a825; font-weight: 600; }
+
+.past-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.past-job-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.7rem 1rem; background: #f9f9f9; border-radius: 8px;
+  flex-wrap: wrap; gap: 0.5rem;
+}
+.past-job-title { font-weight: 600; font-size: 0.9rem; display: block; }
+.past-job-meta { font-size: 0.78rem; color: #888; }
+</style>
+{% endblock %}

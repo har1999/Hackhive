@@ -5,6 +5,7 @@ The profile IS the job history.
 """
 from django.db import models
 from django.conf import settings
+from django.db.models import Avg
 from jobs.models import SKILL_CHOICES
 
 
@@ -34,52 +35,39 @@ class WorkerProfile(models.Model):
 
     @property
     def unique_contractors(self):
-        return self.user.engagements.filter(status='completed').values('contractor').distinct().count()
+        return self.user.engagements.filter(
+            status='completed'
+        ).values('contractor').distinct().count()
 
     @property
     def average_rating(self):
-        from django.db.models import Avg
-        result = self.user.ratings_received.filter(
-            direction='contractor_to_worker'
-        ).aggregate(avg=Avg('score'))
+        result = self.user.ratings_received.aggregate(avg=Avg('score'))
         return round(result['avg'] or 0, 1)
 
     @property
     def trust_level(self):
         jobs = self.total_jobs
-        if jobs == 0: return 'new'
-        if jobs < 5: return 'emerging'
-        if jobs < 15: return 'established'
+        if jobs == 0:
+            return 'new'
+        if jobs < 5:
+            return 'emerging'
+        if jobs < 15:
+            return 'established'
         return 'verified'
 
     @property
     def trust_score(self):
-        """
-        Weighted trust score (0-100).
-        Components:
-        - Average rating (0-5) → weighted 50%
-        - Unique contractors → up to 20 pts
-        - Endorsement count → up to 20 pts
-        - Recency boost → up to 10 pts
-        """
-        from django.db.models import Avg, Count
         from django.utils import timezone
+        from jobs.models import JobEngagement
 
         jobs = self.total_jobs
         if jobs == 0:
             return 0
 
-        avg_rating = self.average_rating
-        rating_score = (avg_rating / 5) * 50
+        rating_score = (self.average_rating / 5) * 50
+        contractor_score = min(self.unique_contractors, 10) * 2
+        endorsement_score = min(self.user.endorsements_received.count(), 20) * 1
 
-        contractors = min(self.unique_contractors, 10)
-        contractor_score = contractors * 2
-
-        endorsement_count = min(self.user.endorsements_received.count(), 20)
-        endorsement_score = endorsement_count * 1
-
-        # Recency: any job in last 30 days
-        from jobs.models import JobEngagement
         recent = JobEngagement.objects.filter(
             worker=self.user,
             status='completed',

@@ -1,106 +1,138 @@
 {% extends 'base.html' %}
-{% block title %}Rate — KaamSetu{% endblock %}
-{% block body %}
+{% block title %}Rate Experience — KaamSetu{% endblock %}
+{% block content %}
 
-<nav class="navbar">
-  <a href="/" class="navbar-brand">🏗️ <span>KaamSetu</span></a>
-</nav>
+<style>
+  .rate-wrap { max-width: 480px; margin: 2rem auto; padding: 0 1rem 3rem; }
+  .rate-card { background: white; border-radius: 20px; box-shadow: 0 4px 24px rgba(0,0,0,.08); overflow: hidden; }
+  .rate-head { background: linear-gradient(135deg,#18120a,#2d1f14); padding: 1.5rem; text-align: center; }
+  .rate-head .ico { font-size: 2.5rem; }
+  .rate-head h1 { color: white; font-size: 1.2rem; font-weight: 800; margin-top: .4rem; }
+  .rate-head p { color: rgba(255,255,255,.6); font-size: .82rem; margin-top: .2rem; }
+  .rate-body { padding: 1.75rem; }
+  .ratee-block { text-align: center; margin-bottom: 1.5rem; }
+  .ratee-avatar {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: #fff7ed; display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; font-weight: 800; color: #ea580c;
+    margin: 0 auto .5rem;
+  }
+  .ratee-name { font-weight: 700; font-size: 1.1rem; }
+  .ratee-role { font-size: .82rem; color: #8a7060; }
+  .warning-box {
+    background: #fef3c7; border-left: 3px solid #d97706;
+    padding: .75rem 1rem; border-radius: 10px;
+    font-size: .82rem; color: #92400e; margin-bottom: 1.5rem;
+    display: flex; gap: .4rem;
+  }
+  .star-group { text-align: center; }
+  .star-group label { font-size: .8rem; font-weight: 600; color: #44332a; display: block; margin-bottom: .75rem; }
+  .stars-row { display: flex; justify-content: center; gap: .3rem; margin-bottom: .5rem; }
+  .star-btn {
+    font-size: 2.8rem; color: #e5e7eb; cursor: pointer;
+    transition: all .12s; background: none; border: none; padding: 0; line-height: 1;
+  }
+  .star-btn:hover, .star-btn.active { color: #d97706; transform: scale(1.15); }
+  .star-label { font-size: .82rem; color: #8a7060; min-height: 1.2em; margin-bottom: 1.25rem; }
+  .form-field { margin-bottom: 1.1rem; }
+  .form-field label { display: block; font-size: .8rem; font-weight: 600; color: #44332a; margin-bottom: .35rem; }
+  .form-field input {
+    width: 100%; padding: .7rem 1rem; border: 1.5px solid #efe8df; border-radius: 10px;
+    font-size: .9rem; background: #fffaf6; color: #18120a; box-sizing: border-box;
+    transition: border .15s;
+  }
+  .form-field input:focus { outline: none; border-color: #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,.12); }
+  .btn-submit {
+    width: 100%; padding: .85rem; background: #f97316; color: white;
+    border: none; border-radius: 10px; font-size: .95rem; font-weight: 700;
+    cursor: pointer; transition: all .15s; opacity: .5; pointer-events: none;
+  }
+  .btn-submit.ready { opacity: 1; pointer-events: auto; }
+  .btn-submit.ready:hover { background: #ea580c; transform: translateY(-1px); }
+  .skip-link { text-align: center; margin-top: .875rem; }
+  .skip-link a { color: #8a7060; font-size: .82rem; text-decoration: none; }
+</style>
 
-<div class="container-sm" style="padding-top:2rem;padding-bottom:3rem;">
+<div class="rate-wrap">
+  <div class="rate-card">
 
-  <div class="card">
-    <div style="background:linear-gradient(135deg,var(--steel),#2c2410);padding:1.5rem;text-align:center;border-radius:var(--radius) var(--radius) 0 0;">
-      <div style="font-size:3rem;">⭐</div>
-      <h1 style="color:white;font-size:1.3rem;margin-top:0.5rem;">Rate Your Experience</h1>
-      <p style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin-top:0.3rem;">
-        Job: <strong>{{ engagement.job.title }}</strong>
-      </p>
+    <div class="rate-head">
+      <div class="ico">⭐</div>
+      <h1>Rate Your Experience</h1>
+      <p>Job: <strong>{{ engagement.job.title }}</strong></p>
     </div>
 
-    <div class="card-body" style="padding:1.75rem;">
+    <div class="rate-body">
 
-      <div style="text-align:center;margin-bottom:1.5rem;">
-        <div style="font-size:0.9rem;color:var(--concrete);margin-bottom:0.5rem;">You're rating</div>
-        <div style="width:60px;height:60px;border-radius:50%;background:var(--orange-light);
-                    display:flex;align-items:center;justify-content:center;
-                    font-size:1.5rem;font-weight:800;color:var(--orange-dark);
-                    margin:0 auto 0.5rem;font-family:var(--font-display);">
-          {{ ratee.name|slice:":1"|upper }}
-        </div>
-        <div style="font-weight:700;font-size:1.1rem;">{{ ratee.name }}</div>
-        <div style="font-size:0.82rem;color:var(--concrete);">
+      <div class="ratee-block">
+        <div class="ratee-avatar">{{ ratee.name|slice:":1"|upper }}</div>
+        <div class="ratee-name">{{ ratee.name }}</div>
+        <div class="ratee-role">
           {% if direction == 'contractor_to_worker' %}Worker{% else %}Contractor{% endif %}
         </div>
       </div>
 
-      <div class="alert alert-warning" style="margin-bottom:1.5rem;">
-        ⚠️ <strong>Ratings are permanent.</strong> Once submitted, they cannot be changed. Be honest and fair.
+      <div class="warning-box">
+        ⚠️ <strong>Ratings are permanent.</strong> Once submitted they cannot be changed — by anyone. Be honest and fair.
       </div>
 
       <form method="POST">
         {% csrf_token %}
+        <input type="hidden" name="score" id="scoreVal" value="0">
 
-        <!-- STAR RATING -->
-        <div class="form-group" style="text-align:center;">
-          <label class="form-label" style="font-size:1rem;">How would you rate this person?</label>
-          <div class="star-group" style="display:flex;justify-content:center;gap:0.5rem;margin-top:0.75rem;">
-            <input type="hidden" name="score" id="scoreInput" value="0">
+        <div class="star-group">
+          <label>How would you rate this person?</label>
+          <div class="stars-row">
             {% for i in "12345" %}
-            <span class="star-input" data-val="{{ forloop.counter }}" style="color:#d1ccc7;font-size:2.8rem;">★</span>
+            <button type="button" class="star-btn" data-v="{{ forloop.counter }}">★</button>
             {% endfor %}
           </div>
-          <div style="font-size:0.82rem;color:var(--concrete);margin-top:0.5rem;" id="ratingLabel">
-            Tap a star to rate
-          </div>
+          <div class="star-label" id="starLabel">Click a star to rate</div>
         </div>
 
-        <div class="form-group" style="margin-top:1.25rem;">
-          <label class="form-label">One-line note (optional)</label>
-          <input type="text" name="note" class="form-control"
-                 maxlength="280"
+        <div class="form-field">
+          <label>One-line note <span style="font-weight:400;color:#8a7060">(optional, max 280 chars)</span></label>
+          <input type="text" name="note" maxlength="280"
                  placeholder="{% if direction == 'contractor_to_worker' %}e.g. Good mason, punctual, clean work{% else %}e.g. Paid on time, clear instructions{% endif %}">
-          <div style="font-size:0.75rem;color:var(--concrete);margin-top:0.3rem;">Max 280 characters</div>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block btn-lg" id="submitBtn" disabled>
-          Submit Rating →
-        </button>
-
-        <div style="text-align:center;margin-top:1rem;">
-          <a href="{% if request.user.is_contractor %}/contractor/dashboard/{% else %}/worker/my-jobs/{% endif %}"
-             style="color:var(--concrete);font-size:0.85rem;">Skip for now</a>
-        </div>
-
+        <button type="submit" class="btn-submit" id="submitBtn">Submit Rating →</button>
       </form>
+
+      <div class="skip-link">
+        <a href="{% if request.user.is_contractor %}/contractor/dashboard/{% else %}/worker/my-jobs/{% endif %}">
+          Skip for now
+        </a>
+      </div>
+
     </div>
   </div>
-
 </div>
 
 <script>
-const labels = ['', 'Poor', 'Below Average', 'Average', 'Good', 'Excellent'];
-document.querySelectorAll('.star-input').forEach(star => {
-  star.addEventListener('click', function() {
-    const val = parseInt(this.dataset.val);
-    document.getElementById('scoreInput').value = val;
-    document.getElementById('ratingLabel').textContent = labels[val] + ' (' + val + '/5)';
-    document.getElementById('ratingLabel').style.color = val >= 4 ? 'var(--green)' : val >= 3 ? 'var(--amber)' : 'var(--red)';
-    document.getElementById('submitBtn').disabled = false;
-    document.querySelectorAll('.star-input').forEach(s => {
-      s.style.color = parseInt(s.dataset.val) <= val ? 'var(--amber)' : '#d1ccc7';
-    });
+const LABELS = ['','Poor','Below Average','Average','Good','Excellent ⭐'];
+const stars  = document.querySelectorAll('.star-btn');
+const input  = document.getElementById('scoreVal');
+const label  = document.getElementById('starLabel');
+const submit = document.getElementById('submitBtn');
+
+stars.forEach(s => {
+  s.addEventListener('click', function () {
+    const v = +this.dataset.v;
+    input.value = v;
+    label.textContent = LABELS[v] + ' (' + v + '/5)';
+    label.style.color  = v >= 4 ? '#16a34a' : v >= 3 ? '#d97706' : '#dc2626';
+    submit.classList.add('ready');
+    stars.forEach(x => x.classList.toggle('active', +x.dataset.v <= v));
+    stars.forEach(x => x.style.color = +x.dataset.v <= v ? '#d97706' : '#e5e7eb');
   });
-  star.addEventListener('mouseover', function() {
-    const val = parseInt(this.dataset.val);
-    document.querySelectorAll('.star-input').forEach(s => {
-      s.style.color = parseInt(s.dataset.val) <= val ? 'var(--amber)' : '#d1ccc7';
-    });
+  s.addEventListener('mouseover', function () {
+    const v = +this.dataset.v;
+    stars.forEach(x => x.style.color = +x.dataset.v <= v ? '#d97706' : '#e5e7eb');
   });
-  star.addEventListener('mouseout', function() {
-    const selected = parseInt(document.getElementById('scoreInput').value) || 0;
-    document.querySelectorAll('.star-input').forEach(s => {
-      s.style.color = parseInt(s.dataset.val) <= selected ? 'var(--amber)' : '#d1ccc7';
-    });
+  s.addEventListener('mouseout', function () {
+    const sel = +input.value;
+    stars.forEach(x => x.style.color = +x.dataset.v <= sel ? '#d97706' : '#e5e7eb');
   });
 });
 </script>

@@ -1,55 +1,257 @@
 {% extends 'base.html' %}
+{% block title %}{{ target_user.name }} — KaamSetu Profile{% endblock %}
 {% block content %}
-<div class="profile-header">
-    <div class="profile-main">
-        <h1>{{ target_user.name }}</h1>
-        <div class="badge-row">
-            <span class="badge skill">{{ target_user.get_primary_skill_display }}</span>
-            <span class="badge location">📍 {{ target_user.location_name }}</span>
-        </div>
-        <p class="phone-display">📞 {{ target_user.phone }}</p>
-    </div>
-</div>
-
-<div class="history-section">
-    <h2>Verified Work History</h2>
-    
-    {% if not completed_engagements %}
-        <div class="empty-state">
-            <p>New to KaamSetu — No jobs completed yet.</p>
-        </div>
-    {% else %}
-        <div class="timeline">
-            {% for eng in completed_engagements %}
-            <div class="timeline-item">
-                <div class="job-meta">
-                    <h3>{{ eng.job.title }}</h3>
-                    <p class="date">{{ eng.completed_at|date:"M Y" }} • Hired by {{ eng.contractor.name }}</p>
-                </div>
-                
-                <div class="rating-display">
-                    {% with rating=eng.ratings.first %}
-                        <div class="stars">{"⭐"|repeat:rating.score}</div>
-                        <p class="note">"{{ rating.note }}"</p>
-                    {% endwith %}
-                </div>
-
-                <div class="endorsements">
-                    {% for endo in eng.endorsements.all %}
-                        <span class="endo-tag">✓ {{ endo.tag_label }}</span>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-</div>
 
 <style>
-    .profile-header { background: white; padding: 2rem; border-bottom: 1px solid #e5e7eb; margin-bottom: 2rem; text-align: center; }
-    .badge-row { display: flex; justify-content: center; gap: 0.5rem; margin: 1rem 0; }
-    .badge { padding: 0.4rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.85rem; }
-    .badge.skill { background: #fff7ed; color: #f97316; border: 1px solid #ffedd5; }
-    .endo-tag { background: #f0fdf4; color: #16a34a; padding: 0.2rem 0.6rem; border-radius: 5px; font-size: 0.8rem; margin-right: 0.5rem; }
+  .profile-wrap { max-width: 700px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  .profile-header {
+    background: linear-gradient(135deg, #18120a 0%, #2d1f14 100%);
+    border-radius: 20px; padding: 1.75rem; margin-bottom: 1.25rem;
+    position: relative; overflow: hidden;
+  }
+  .profile-header::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 80% 50%, rgba(249,115,22,.12) 0%, transparent 60%);
+  }
+  .profile-header-inner { position: relative; z-index: 1; display: flex; gap: 1.25rem; align-items: flex-start; flex-wrap: wrap; }
+  .profile-avatar {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: #f97316; display: flex; align-items: center; justify-content: center;
+    font-size: 1.75rem; font-weight: 800; color: white;
+    border: 3px solid rgba(255,255,255,.2); flex-shrink: 0;
+  }
+  .profile-name { color: white; font-size: 1.5rem; font-weight: 800; margin-bottom: .4rem; }
+  .profile-meta { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .profile-skill-badge {
+    background: rgba(249,115,22,.2); color: #f97316;
+    padding: .2rem .75rem; border-radius: 999px;
+    font-size: .78rem; font-weight: 700;
+    border: 1px solid rgba(249,115,22,.3);
+  }
+  .profile-loc { color: rgba(255,255,255,.55); font-size: .8rem; }
+  .profile-phone { color: rgba(255,255,255,.45); font-size: .78rem; }
+  .trust-badge {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .25rem .75rem; border-radius: 999px; font-size: .75rem; font-weight: 700;
+  }
+  .trust-new { background: #f1f5f9; color: #64748b; }
+  .trust-emerging { background: #fef3c7; color: #92400e; }
+  .trust-established { background: #dcfce7; color: #166534; }
+  .trust-verified { background: #ede9fe; color: #5b21b6; }
+
+  .stats-bar { display: grid; grid-template-columns: repeat(4,1fr); background: white; border-radius: 16px; box-shadow: 0 2px 8px rgba(24,18,10,.08); margin-bottom: 1.25rem; overflow: hidden; }
+  .stat-item { padding: 1rem; text-align: center; }
+  .stat-item:not(:last-child) { border-right: 1px solid #efe8df; }
+  .stat-num { font-size: 1.5rem; font-weight: 800; color: #f97316; line-height: 1; }
+  .stat-lbl { font-size: .7rem; color: #8a7060; margin-top: .2rem; font-weight: 500; }
+
+  .honest-banner {
+    background: #fff7ed; border: 1.5px solid #ffedd5; border-radius: 14px;
+    padding: 1rem 1.25rem; margin-bottom: 1.5rem;
+    display: flex; gap: .75rem; align-items: flex-start;
+  }
+  .honest-banner .ico { font-size: 1.25rem; flex-shrink: 0; }
+  .honest-banner h4 { font-size: .85rem; font-weight: 700; color: #ea580c; margin-bottom: .2rem; }
+  .honest-banner p { font-size: .78rem; color: #44332a; line-height: 1.5; }
+
+  .sec-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.1rem; color: #18120a; display: flex; justify-content: space-between; align-items: center; }
+  .sec-title span { font-size: .8rem; color: #8a7060; font-weight: 500; }
+  .timeline { position: relative; padding-left: 1.75rem; }
+  .timeline::before {
+    content: ''; position: absolute; left: .55rem; top: 0; bottom: 0;
+    width: 2px; background: linear-gradient(to bottom, #f97316, #ffedd5);
+  }
+  .tl-item { position: relative; margin-bottom: 1.5rem; }
+  .tl-dot {
+    position: absolute; left: -1.65rem; top: .5rem;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #f97316; border: 2.5px solid white; box-shadow: 0 0 0 2px #f97316;
+  }
+  .tl-card {
+    background: white; border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(24,18,10,.08);
+    padding: 1.25rem; border-left: 3px solid #ffedd5;
+  }
+  .tl-job-title { font-weight: 700; font-size: 1rem; color: #18120a; }
+  .tl-contractor { font-size: .8rem; color: #8a7060; margin-top: .2rem; }
+  .tl-meta { font-size: .77rem; color: #8a7060; margin-top: .2rem; display: flex; gap: .75rem; flex-wrap: wrap; }
+  .star-row { display: flex; gap: 2px; }
+  .star-on { color: #d97706; font-size: 1rem; }
+  .star-off { color: #e5e7eb; font-size: 1rem; }
+  .rating-note {
+    margin-top: .65rem; padding: .6rem .9rem;
+    background: #f8f2ec; border-radius: 10px;
+    font-size: .8rem; color: #44332a; font-style: italic;
+    border-left: 2px solid #ffedd5;
+  }
+  .endorsements-wrap { margin-top: .875rem; }
+  .endorsements-label { font-size: .72rem; font-weight: 700; color: #8a7060; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .4rem; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: .35rem; }
+  .chip {
+    display: inline-flex; align-items: center; gap: .25rem;
+    padding: .2rem .7rem; background: #dcfce7; color: #166534;
+    border-radius: 999px; font-size: .72rem; font-weight: 600;
+  }
+  .chip::before { content: '✓'; font-weight: 800; }
+
+  .empty-box {
+    background: white; border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(24,18,10,.08);
+    padding: 3rem 1.5rem; text-align: center;
+  }
+  .empty-box .ico { font-size: 3rem; margin-bottom: 1rem; display: block; }
+  .empty-box h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: .4rem; }
+  .empty-box p { font-size: .875rem; color: #8a7060; max-width: 300px; margin: 0 auto; }
+  .btn-browse {
+    display: inline-block; margin-top: 1.25rem; padding: .7rem 1.5rem;
+    background: #f97316; color: white; border-radius: 10px;
+    text-decoration: none; font-weight: 700; font-size: .9rem;
+  }
 </style>
+
+<div class="profile-wrap">
+
+  <!-- HEADER -->
+  <div class="profile-header">
+    <div class="profile-header-inner">
+      <div class="profile-avatar">{{ target_user.name|slice:":1"|upper }}</div>
+      <div style="flex:1;min-width:0">
+        <div class="profile-name">{{ target_user.name }}</div>
+        <div class="profile-meta">
+          {% if target_user.primary_skill %}
+          <span class="profile-skill-badge">
+            {% if target_user.primary_skill == 'mason' %}🧱
+            {% elif target_user.primary_skill == 'electrician' %}⚡
+            {% elif target_user.primary_skill == 'painter' %}🎨
+            {% elif target_user.primary_skill == 'labourer' %}👷
+            {% else %}🔨{% endif %}
+            {{ target_user.get_primary_skill_display }}
+          </span>
+          {% endif %}
+          {% if target_user.location_name %}<span class="profile-loc">📍 {{ target_user.location_name }}</span>{% endif %}
+          <span class="profile-phone">📱 {{ target_user.phone }}</span>
+        </div>
+      </div>
+      <div style="flex-shrink:0">
+        {% if profile.trust_level == 'verified' %}<span class="trust-badge trust-verified">🛡️ Verified</span>
+        {% elif profile.trust_level == 'established' %}<span class="trust-badge trust-established">✅ Established</span>
+        {% elif profile.trust_level == 'emerging' %}<span class="trust-badge trust-emerging">📈 Emerging</span>
+        {% else %}<span class="trust-badge trust-new">🆕 New</span>{% endif %}
+        {% if profile.trust_score > 0 %}
+        <div style="font-size:.72rem;color:rgba(255,255,255,.35);margin-top:.3rem;text-align:center">{{ profile.trust_score }}/100</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-num">{{ profile.total_jobs }}</div>
+      <div class="stat-lbl">Jobs Done</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" style="color:#d97706">{{ profile.average_rating }}</div>
+      <div class="stat-lbl">Avg Rating</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" style="color:#16a34a">{{ target_user.endorsements_received.count }}</div>
+      <div class="stat-lbl">Endorsements</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" style="color:#7c3aed">{{ profile.unique_contractors }}</div>
+      <div class="stat-lbl">Contractors</div>
+    </div>
+  </div>
+
+  <!-- HONEST BANNER -->
+  <div class="honest-banner">
+    <span class="ico">📋</span>
+    <div>
+      <h4>Honest Profile — No Self-Written Claims</h4>
+      <p>This profile shows only <strong>completed jobs verified by contractors</strong>. No bio, no self-reported experience. Every entry below was confirmed by a real contractor who paid this worker.</p>
+    </div>
+  </div>
+
+  <!-- JOB HISTORY -->
+  {% if completed_engagements %}
+
+  <div class="sec-title">
+    📚 Verified Work History
+    <span>{{ completed_engagements|length }} job{% if completed_engagements|length != 1 %}s{% endif %} completed</span>
+  </div>
+
+  <div class="timeline">
+    {% for eng in completed_engagements %}
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-card">
+
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap">
+          <div style="flex:1;min-width:0">
+            <div class="tl-job-title">{{ eng.job.title }}</div>
+            <div class="tl-contractor">
+              by <strong>{{ eng.contractor.name }}</strong>
+              {% if eng.contractor.contractor_profile.company_name %} · {{ eng.contractor.contractor_profile.company_name }}{% endif %}
+            </div>
+            <div class="tl-meta">
+              <span>📍 {{ eng.job.location_name }}</span>
+              <span>📅 {{ eng.completed_at|date:"d M Y" }}</span>
+              <span>⏱ {{ eng.job.duration_days }} day{% if eng.job.duration_days != 1 %}s{% endif %}</span>
+              <span>💰 ₹{{ eng.job.daily_rate }}/day</span>
+            </div>
+          </div>
+
+          <!-- STAR RATING -->
+          {% for rating in eng.ratings.all %}
+          <div style="flex-shrink:0;text-align:right">
+            <div class="star-row">
+              {% for i in "12345" %}
+              <span class="{% if forloop.counter <= rating.score %}star-on{% else %}star-off{% endif %}">★</span>
+              {% endfor %}
+            </div>
+            <div style="font-size:.72rem;color:#8a7060;margin-top:.15rem">{{ rating.score }}/5 by contractor</div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Rating review -->
+        {% for rating in eng.ratings.all %}
+          {% if rating.review %}
+          <div class="rating-note">"{{ rating.review }}"</div>
+          {% endif %}
+        {% endfor %}
+
+        <!-- Endorsements -->
+        {% if eng.endorsements.all %}
+        <div class="endorsements-wrap">
+          <div class="endorsements-label">Skills observed on this job:</div>
+          <div class="chip-row">
+            {% for end in eng.endorsements.all %}
+            <span class="chip">{{ end.skill_tag }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+
+  <div class="empty-box">
+    <span class="ico">🏗️</span>
+    <h3>New to KaamSetu — No jobs completed yet</h3>
+    <p>This worker hasn't completed any jobs on the platform yet. Their profile will build automatically with each completed and rated engagement.</p>
+    {% if is_own_profile %}
+    <a href="/worker/feed/" class="btn-browse">Browse Jobs →</a>
+    {% endif %}
+  </div>
+
+  {% endif %}
+
+</div>
+
 {% endblock %}

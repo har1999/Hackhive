@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block title %}Post a Job — KaamSetu{% endblock %}
+
+{% block content %}
+<div class="form-wrap">
+
+  <div class="form-header">
+    <a href="{% url 'contractor_dashboard' %}" class="back-link">← Back to Dashboard</a>
+    <h1 class="form-title">Post a New Job</h1>
+    <p class="form-sub">Fill in the details below. Workers in the matching skill category will see your job.</p>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post" class="job-form">
+    {% csrf_token %}
+
+    <div class="form-group">
+      <label for="title">Job Title <span class="required">*</span></label>
+      <input type="text" id="title" name="title" placeholder="e.g. Tiling work for 2BHK flat"
+        required maxlength="200">
+      <span class="hint">Be specific — workers respond better to clear titles.</span>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="skill_required">Skill Required <span class="required">*</span></label>
+     <select id="skill_category" name="skill_category" required>
+          <option value="" disabled selected>Select a skill</option>
+          {% for value, label in skill_choices %}
+            <option value="{{ value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="location_name">Location <span class="required">*</span></label>
+        <input type="text" id="location_name" name="location_name"
+          placeholder="e.g. Andheri West, Mumbai" required maxlength="200">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="daily_rate">Daily Rate (₹) <span class="required">*</span></label>
+        <input type="number" id="daily_rate" name="daily_rate"
+          placeholder="e.g. 800" min="0" required>
+      </div>
+
+      <div class="form-group">
+        <label for="duration_days">Duration (days) <span class="required">*</span></label>
+        <input type="number" id="duration_days" name="duration_days"
+          placeholder="e.g. 5" min="1" value="1" required>
+      </div>
+
+      <div class="form-group">
+        <label for="workers_needed">Workers Needed <span class="required">*</span></label>
+        <input type="number" id="workers_needed" name="workers_needed"
+          placeholder="e.g. 2" min="1" value="1" required>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="start_date">Start Date <span class="required">*</span></label>
+      <input type="date" id="start_date" name="start_date" required>
+    </div>
+
+    <div class="form-group">
+      <label for="description">Job Description</label>
+      <textarea id="description" name="description" rows="4"
+        placeholder="Describe the work in detail — materials provided, site conditions, start time, etc."></textarea>
+    </div>
+
+    <div class="form-group urgent-toggle">
+      <label class="toggle-label">
+        <input type="checkbox" id="is_urgent" name="is_urgent">
+        <span class="toggle-box">
+          <span class="toggle-icon">🔴</span>
+          <span>
+            <strong>Mark as Urgent (Same Day)</strong>
+            <small>Workers nearby will be notified immediately</small>
+          </span>
+        </span>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <a href="{% url 'contractor_dashboard' %}" class="btn-cancel">Cancel</a>
+      <button type="submit" class="btn-submit">Post Job →</button>
+    </div>
+
+  </form>
+</div>
+
+<style>
+.form-wrap {
+  max-width: 700px; margin: 0 auto; padding: 2rem 1rem;
+}
+
+.back-link {
+  color: #1a73e8; text-decoration: none; font-size: 0.88rem;
+  display: inline-block; margin-bottom: 1rem;
+}
+.back-link:hover { text-decoration: underline; }
+
+.form-header { margin-bottom: 1.8rem; }
+.form-title { font-size: 1.7rem; font-weight: 700; margin: 0 0 0.3rem; }
+.form-sub { color: #666; margin: 0; font-size: 0.93rem; }
+
+.alert {
+  padding: 0.75rem 1rem; border-radius: 8px;
+  margin-bottom: 1rem; font-size: 0.9rem;
+}
+.alert-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+.alert-error { background: #fdecea; color: #c62828; border: 1px solid #ef9a9a; }
+
+.job-form {
+  background: #fff; border: 1px solid #e0e0e0;
+  border-radius: 14px; padding: 2rem;
+}
+
+.form-group {
+  display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.3rem;
+}
+
+.form-group label {
+  font-weight: 600; font-size: 0.9rem; color: #333;
+}
+
+.required { color: #e53935; }
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 0.65rem 0.9rem;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  background: #fafafa;
+  color: #222;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #1a73e8;
+  background: #fff;
+}
+
+.form-group textarea { resize: vertical; }
+
+.hint { font-size: 0.78rem; color: #999; }
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.urgent-toggle { margin-bottom: 1.5rem; }
+
+.toggle-label { cursor: pointer; }
+
+.toggle-box {
+  display: flex; align-items: center; gap: 0.8rem;
+  border: 1.5px solid #ddd; border-radius: 10px;
+  padding: 0.8rem 1rem; background: #fafafa;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.toggle-label input[type="checkbox"] { display: none; }
+
+.toggle-label input[type="checkbox"]:checked + .toggle-box {
+  border-color: #e53935;
+  background: #fff5f5;
+}
+
+.toggle-icon { font-size: 1.3rem; }
+
+.toggle-box strong { display: block; font-size: 0.92rem; color: #222; }
+.toggle-box small { font-size: 0.78rem; color: #888; }
+
+.form-actions {
+  display: flex; justify-content: flex-end;
+  gap: 0.75rem; margin-top: 0.5rem;
+}
+
+.btn-cancel {
+  padding: 0.6rem 1.2rem; border-radius: 8px;
+  border: 1.5px solid #ddd; color: #555;
+  text-decoration: none; font-size: 0.93rem;
+  background: #fff;
+}
+.btn-cancel:hover { background: #f5f5f5; }
+
+.btn-submit {
+  padding: 0.6rem 1.6rem; border-radius: 8px;
+  background: #1a73e8; color: #fff;
+  border: none; font-size: 0.95rem;
+  font-weight: 700; cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-submit:hover { background: #1558b0; }
+</style>
+{% endblock %}

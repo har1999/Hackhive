@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+
+{% block title %}Rate Worker — KaamSetu{% endblock %}
+
+{% block content %}
+<div class="rate-wrap">
+
+  <div class="page-header">
+    <a href="{% url 'contractor_dashboard' %}" class="back-link">← Back to Dashboard</a>
+    <h1 class="page-title">Rate Worker</h1>
+    <p class="page-sub">Your rating becomes part of this worker's permanent verified record.</p>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Worker Summary Card -->
+  <div class="worker-card">
+    <div class="worker-avatar">{{ engagement.worker.name|first|upper }}</div>
+    <div class="worker-info">
+      <h2 class="worker-name">{{ engagement.worker.name }}</h2>
+      <span class="worker-skill">{{ engagement.worker.primary_skill|capfirst }}</span>
+      <span class="worker-job">Job: <strong>{{ engagement.job.title }}</strong></span>
+    </div>
+  </div>
+
+  <form method="post" class="rate-form">
+    {% csrf_token %}
+
+    <!-- Star Rating -->
+    <div class="form-section">
+      <label class="section-label">Overall Rating <span class="required">*</span></label>
+      <p class="section-hint">How would you rate this worker's overall performance?</p>
+
+      <div class="star-selector">
+        {% for i in "54321" %}
+          <input type="radio" name="score" id="star{{ i }}" value="{{ i }}" required>
+          <label for="star{{ i }}" title="{{ i }} star{{ i|pluralize }}">★</label>
+        {% endfor %}
+      </div>
+
+      <div class="star-labels">
+        <span>Poor</span>
+        <span>Below Average</span>
+        <span>Average</span>
+        <span>Good</span>
+        <span>Excellent</span>
+      </div>
+    </div>
+
+    <!-- Written Review -->
+    <div class="form-section">
+      <label class="section-label" for="review">One-line Review</label>
+      <p class="section-hint">Optional — a short note about the worker's performance.</p>
+      <textarea id="review" name="review" rows="3"
+        placeholder="e.g. Arrived on time every day, tiling finish was excellent."
+        maxlength="300"></textarea>
+      <span class="char-hint">Max 300 characters</span>
+    </div>
+
+    <!-- Skill Endorsements -->
+    <div class="form-section">
+      <label class="section-label">Skill Endorsements</label>
+      <p class="section-hint">
+        Select skills you personally observed during this job.
+        These are attached to this specific engagement — not generic praise.
+      </p>
+      <div class="endorsement-grid">
+        {% for tag in skill_tags %}
+          <label class="endorse-chip">
+            <input type="checkbox" name="endorsements" value="{{ tag }}">
+            <span>{{ tag }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Notice -->
+    <div class="notice">
+      ⚠️ Ratings cannot be edited once submitted. Please review before confirming.
+    </div>
+
+    <div class="form-actions">
+      <a href="{% url 'contractor_dashboard' %}" class="btn-cancel">Cancel</a>
+      <button type="submit" class="btn-submit">Submit Rating →</button>
+    </div>
+
+  </form>
+</div>
+
+<style>
+.rate-wrap {
+  max-width: 640px; margin: 0 auto; padding: 2rem 1rem;
+}
+
+.back-link {
+  color: #1a73e8; text-decoration: none; font-size: 0.88rem;
+  display: inline-block; margin-bottom: 1rem;
+}
+.back-link:hover { text-decoration: underline; }
+
+.page-header { margin-bottom: 1.8rem; }
+.page-title { font-size: 1.6rem; font-weight: 700; margin: 0 0 0.3rem; }
+.page-sub { color: #666; margin: 0; font-size: 0.92rem; }
+
+.alert {
+  padding: 0.75rem 1rem; border-radius: 8px;
+  margin-bottom: 1rem; font-size: 0.9rem;
+}
+.alert-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+.alert-error { background: #fdecea; color: #c62828; border: 1px solid #ef9a9a; }
+.alert-info { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+
+.worker-card {
+  display: flex; align-items: center; gap: 1rem;
+  background: #f0f4ff; border: 1px solid #c5d5f5;
+  border-radius: 12px; padding: 1.1rem 1.3rem;
+  margin-bottom: 1.8rem;
+}
+
+.worker-avatar {
+  width: 50px; height: 50px; border-radius: 50%;
+  background: #1a73e8; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 1.3rem; flex-shrink: 0;
+}
+
+.worker-info { display: flex; flex-direction: column; gap: 0.25rem; }
+.worker-name { font-size: 1.1rem; font-weight: 700; margin: 0; }
+.worker-skill {
+  font-size: 0.75rem; background: #1a73e8; color: #fff;
+  padding: 0.15rem 0.55rem; border-radius: 20px;
+  display: inline-block; width: fit-content;
+}
+.worker-job { font-size: 0.83rem; color: #555; }
+
+.rate-form {
+  background: #fff; border: 1px solid #e0e0e0;
+  border-radius: 14px; padding: 1.8rem;
+}
+
+.form-section { margin-bottom: 1.8rem; }
+
+.section-label {
+  display: block; font-weight: 700;
+  font-size: 0.95rem; color: #222; margin-bottom: 0.25rem;
+}
+.section-hint { font-size: 0.82rem; color: #888; margin: 0 0 0.9rem; }
+.required { color: #e53935; }
+
+/* Star Rating */
+.star-selector {
+  display: flex; flex-direction: row-reverse;
+  justify-content: flex-end; gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.star-selector input[type="radio"] { display: none; }
+
+.star-selector label {
+  font-size: 2.2rem; color: #ddd; cursor: pointer;
+  transition: color 0.15s; line-height: 1;
+}
+
+.star-selector label:hover,
+.star-selector label:hover ~ label,
+.star-selector input[type="radio"]:checked ~ label {
+  color: #ffc107;
+}
+
+.star-labels {
+  display: flex; justify-content: space-between;
+  font-size: 0.72rem; color: #aaa;
+  padding: 0 0.2rem; max-width: 220px;
+}
+
+/* Review textarea */
+textarea {
+  width: 100%; padding: 0.65rem 0.9rem;
+  border: 1.5px solid #ddd; border-radius: 8px;
+  font-size: 0.93rem; font-family: inherit;
+  resize: vertical; background: #fafafa; color: #222;
+  box-sizing: border-box; transition: border-color 0.2s;
+}
+textarea:focus { outline: none; border-color: #1a73e8; background: #fff; }
+.char-hint { font-size: 0.75rem; color: #bbb; display: block; margin-top: 0.3rem; }
+
+/* Endorsement chips */
+.endorsement-grid {
+  display: flex; flex-wrap: wrap; gap: 0.6rem;
+}
+
+.endorse-chip input[type="checkbox"] { display: none; }
+
+.endorse-chip span {
+  display: inline-block;
+  padding: 0.4rem 0.85rem;
+  border: 1.5px solid #ddd;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.18s;
+  background: #fafafa;
+  user-select: none;
+}
+
+.endorse-chip input[type="checkbox"]:checked + span {
+  background: #e8f0fe;
+  border-color: #1a73e8;
+  color: #1a73e8;
+  font-weight: 600;
+}
+
+.endorse-chip span:hover {
+  border-color: #1a73e8;
+  color: #1a73e8;
+}
+
+.notice {
+  background: #fff8e1; border: 1px solid #ffe082;
+  border-radius: 8px; padding: 0.7rem 1rem;
+  font-size: 0.83rem; color: #7a5f00;
+  margin-bottom: 1.5rem;
+}
+
+.form-actions {
+  display: flex; justify-content: flex-end; gap: 0.75rem;
+}
+
+.btn-cancel {
+  padding: 0.6rem 1.2rem; border-radius: 8px;
+  border: 1.5px solid #ddd; color: #555;
+  text-decoration: none; font-size: 0.93rem; background: #fff;
+}
+.btn-cancel:hover { background: #f5f5f5; }
+
+.btn-submit {
+  padding: 0.6rem 1.6rem; border-radius: 8px;
+  background: #1a73e8; color: #fff;
+  border: none; font-size: 0.95rem;
+  font-weight: 700; cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-submit:hover { background: #1558b0; }
+</style>
+{% endblock %}

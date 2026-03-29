@@ -1,52 +1,256 @@
 {% extends 'base.html' %}
+{% block title %}Sign Up — KaamSetu{% endblock %}
 {% block content %}
-<div class="auth-container">
-    <div class="auth-card">
-        <h1 class="brand-title">Kaam<span>Setu</span></h1>
-        <p class="auth-subtitle">Create your account to start building trust.</p>
-        
-        <form method="POST" class="auth-form">
-            {% csrf_token %}
-            <input type="text" name="name" placeholder="Full Name" required>
-            <input type="tel" name="phone" placeholder="Phone Number" required>
-            <input type="password" name="password" placeholder="Create Password" required>
-            
-            <div class="role-selector">
-                <label><input type="radio" name="role" value="worker" checked> Worker</label>
-                <label><input type="radio" name="role" value="contractor"> Contractor</label>
-            </div>
-
-            <select name="primary_skill" id="skill-select">
-                <option value="">Select Primary Skill (Workers only)</option>
-                {% for code, label in skills %}
-                <option value="{{ code }}">{{ label }}</option>
-                {% endfor %}
-            </select>
-
-            <div class="location-box">
-                <input type="text" name="location_name" placeholder="Your Area/City" required>
-                <button type="button" data-get-location class="loc-btn">📍 Get GPS</button>
-                <input type="hidden" name="latitude" id="lat">
-                <input type="hidden" name="longitude" id="lng">
-            </div>
-
-            <button type="submit" class="btn-primary">Create Account</button>
-        </form>
-        <p class="auth-footer">Already have an account? <a href="{% url 'login' %}">Login</a></p>
-    </div>
-</div>
 
 <style>
-    .auth-container { display: flex; justify-content: center; align-items: center; min-height: 90vh; background: #f3f4f6; }
-    .auth-card { background: white; padding: 2.5rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 400px; text-align: center; }
-    .brand-title { color: #374151; font-weight: 800; font-size: 2rem; }
-    .brand-title span { color: #f97316; }
-    .auth-subtitle { color: #6b7280; margin-bottom: 2rem; }
-    .auth-form input, .auth-form select { width: 100%; padding: 0.8rem; margin-bottom: 1rem; border: 1px solid #e5e7eb; border-radius: 10px; }
-    .role-selector { display: flex; gap: 1rem; justify-content: center; margin-bottom: 1rem; font-weight: 600; color: #4b5563; }
-    .btn-primary { width: 100%; background: #f97316; color: white; padding: 1rem; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; }
-    .btn-primary:hover { background: #ea580c; }
-    .location-box { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-    .loc-btn { background: #4b5563; color: white; border: none; border-radius: 10px; padding: 0 1rem; cursor: pointer; white-space: nowrap; }
+  .signup-wrap { max-width: 520px; margin: 2rem auto; padding: 0 1rem 3rem; }
+  .signup-brand { text-align: center; margin-bottom: 1.5rem; }
+  .signup-brand .logo { font-size: 1.6rem; font-weight: 800; color: #374151; }
+  .signup-brand .logo span { color: #f97316; }
+  .signup-brand p { color: #6b7280; font-size: .875rem; margin-top: .3rem; }
+  .signup-card { background: white; border-radius: 20px; box-shadow: 0 4px 24px rgba(0,0,0,.08); overflow: hidden; }
+  .signup-card-head { background: #18120a; padding: 1.25rem 1.5rem; }
+  .signup-card-head h2 { color: white; font-size: 1rem; font-weight: 700; }
+  .signup-card-head p { color: rgba(255,255,255,.5); font-size: .8rem; margin-top: .2rem; }
+  .signup-card-body { padding: 1.5rem; }
+
+  /* Role cards */
+  .role-cards { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: 1.25rem; }
+  .role-card input { display: none; }
+  .role-card label {
+    display: flex; flex-direction: column; align-items: center; gap: .4rem;
+    padding: 1.1rem 1rem; border: 2px solid #efe8df; border-radius: 14px;
+    cursor: pointer; transition: all .15s; background: #f8f2ec; text-align: center;
+  }
+  .role-card label .ico { font-size: 2rem; }
+  .role-card label strong { font-size: .875rem; font-weight: 700; color: #18120a; }
+  .role-card label small { font-size: .7rem; color: #8a7060; }
+  .role-card input:checked + label {
+    border-color: #f97316; background: #fff7ed;
+    box-shadow: 0 0 0 3px rgba(249,115,22,.12);
+  }
+
+  /* Skill grid */
+  .skill-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; margin-bottom: 1.25rem; }
+  .skill-opt input { display: none; }
+  .skill-opt label {
+    display: flex; flex-direction: column; align-items: center; gap: .2rem;
+    padding: .65rem .3rem; background: #f8f2ec; border: 2px solid transparent;
+    border-radius: 10px; cursor: pointer; transition: all .15s; text-align: center;
+  }
+  .skill-opt label .ico { font-size: 1.5rem; }
+  .skill-opt label .nm { font-size: .65rem; font-weight: 600; color: #8a7060; }
+  .skill-opt input:checked + label {
+    border-color: #f97316; background: #fff7ed;
+  }
+
+  /* Form fields */
+  .form-field { margin-bottom: 1rem; }
+  .form-field label { display: block; font-size: .8rem; font-weight: 600; color: #44332a; margin-bottom: .35rem; }
+  .form-field input, .form-field select {
+    width: 100%; padding: .65rem .9rem; border: 1.5px solid #efe8df; border-radius: 10px;
+    font-size: .9rem; background: #fffaf6; color: #18120a;
+    transition: border .15s, box-shadow .15s; box-sizing: border-box;
+  }
+  .form-field input:focus, .form-field select:focus {
+    outline: none; border-color: #f97316;
+    box-shadow: 0 0 0 3px rgba(249,115,22,.12); background: white;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .pwd-wrap { position: relative; }
+  .pwd-toggle {
+    position: absolute; right: .8rem; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; color: #8a7060; font-size: .85rem;
+  }
+  .geo-btn {
+    width: 100%; padding: .65rem; background: #f8f2ec;
+    border: 1.5px dashed #efe8df; border-radius: 10px; font-size: .85rem;
+    font-weight: 600; color: #44332a; cursor: pointer; transition: all .15s;
+    display: flex; align-items: center; justify-content: center; gap: .4rem;
+    margin-bottom: 1rem;
+  }
+  .geo-btn:hover { border-color: #f97316; background: #fff7ed; color: #ea580c; }
+  .btn-signup {
+    width: 100%; padding: .85rem; background: #f97316; color: white; border: none;
+    border-radius: 10px; font-size: .95rem; font-weight: 700; cursor: pointer;
+    transition: all .15s; margin-top: .5rem;
+  }
+  .btn-signup:hover { background: #ea580c; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(249,115,22,.4); }
+  .divider-or { display: flex; align-items: center; gap: .75rem; margin: 1.25rem 0; }
+  .divider-or::before, .divider-or::after { content: ''; flex: 1; height: 1px; background: #efe8df; }
+  .divider-or span { font-size: .72rem; color: #8a7060; font-weight: 600; white-space: nowrap; }
+  .login-link { text-align: center; font-size: .875rem; color: #8a7060; }
+  .login-link a { color: #f97316; font-weight: 700; text-decoration: none; }
+  .alert-error-box {
+    background: #fee2e2; color: #991b1b; border-left: 3px solid #dc2626;
+    padding: .65rem .9rem; border-radius: 10px; font-size: .82rem; margin-bottom: .4rem;
+  }
+  .worker-section, .contractor-section { display: none; }
+  .worker-section.show, .contractor-section.show { display: block; }
 </style>
+
+<div class="signup-wrap">
+
+  <div class="signup-brand">
+    <div class="logo">🏗️ Kaam<span>Setu</span></div>
+    <p>Build your verified work profile — no CV needed</p>
+  </div>
+
+  <div class="signup-card">
+    <div class="signup-card-head">
+      <h2>Create Your Account</h2>
+      <p>Join thousands of workers and contractors on KaamSetu</p>
+    </div>
+    <div class="signup-card-body">
+
+      {% if messages %}
+        {% for msg in messages %}
+        <div class="alert-error-box">⚠️ {{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="POST" action="{% url 'signup' %}">
+        {% csrf_token %}
+
+        <!-- ROLE -->
+        <div class="form-field">
+          <label>I am a…</label>
+          <div class="role-cards">
+            <div class="role-card">
+              <input type="radio" name="role" id="role_worker" value="worker"
+                     {% if not form_data or form_data.role != 'contractor' %}checked{% endif %}>
+              <label for="role_worker">
+                <span class="ico">👷</span>
+                <strong>Worker</strong>
+                <small>मज़दूर / कारीगर</small>
+              </label>
+            </div>
+            <div class="role-card">
+              <input type="radio" name="role" id="role_contractor" value="contractor"
+                     {% if form_data.role == 'contractor' %}checked{% endif %}>
+              <label for="role_contractor">
+                <span class="ico">🏢</span>
+                <strong>Contractor</strong>
+                <small>ठेकेदार</small>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- NAME + PHONE -->
+        <div class="grid-2">
+          <div class="form-field">
+            <label>Full Name *</label>
+            <input type="text" name="name" required placeholder="Your name"
+                   value="{{ form_data.name|default:'' }}">
+          </div>
+          <div class="form-field">
+            <label>Mobile Number *</label>
+            <input type="tel" name="phone" required placeholder="10-digit number"
+                   inputmode="numeric" maxlength="15"
+                   value="{{ form_data.phone|default:'' }}">
+          </div>
+        </div>
+
+        <!-- WORKER: Skill -->
+        <div class="worker-section" id="workerSection">
+          <div class="form-field">
+            <label>Primary Skill *</label>
+            <div class="skill-grid">
+              {% for code, label in skills %}
+              <div class="skill-opt">
+                <input type="radio" name="primary_skill" id="sk_{{ code }}" value="{{ code }}"
+                       {% if form_data.primary_skill == code %}checked{% endif %}>
+                <label for="sk_{{ code }}">
+                  <span class="ico">
+                    {% if code == 'mason' %}🧱{% elif code == 'electrician' %}⚡
+                    {% elif code == 'painter' %}🎨{% elif code == 'labourer' %}👷
+                    {% else %}🔨{% endif %}
+                  </span>
+                  <span class="nm">{{ label }}</span>
+                </label>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- CONTRACTOR: Company -->
+        <div class="contractor-section" id="contractorSection">
+          <div class="form-field">
+            <label>Company / Firm Name</label>
+            <input type="text" name="company_name" placeholder="e.g. Aarav Constructions Pvt Ltd"
+                   value="{{ form_data.company_name|default:'' }}">
+          </div>
+        </div>
+
+        <!-- LOCATION -->
+        <div class="form-field">
+          <label>Your Area / Location</label>
+          <input type="text" name="location_name" placeholder="e.g. Andheri West, Mumbai"
+                 value="{{ form_data.location_name|default:'' }}">
+          <input type="hidden" name="latitude" id="lat">
+          <input type="hidden" name="longitude" id="lng">
+        </div>
+        <button type="button" class="geo-btn" id="geoBtn">📍 Auto-detect my location</button>
+
+        <!-- PASSWORD -->
+        <div class="grid-2">
+          <div class="form-field">
+            <label>Password * <small style="font-weight:400;color:#8a7060">(min 6 chars)</small></label>
+            <div class="pwd-wrap">
+              <input type="password" name="password" id="pwd1" required placeholder="Create password">
+              <button type="button" class="pwd-toggle" onclick="togglePwd('pwd1',this)">👁</button>
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Confirm Password *</label>
+            <div class="pwd-wrap">
+              <input type="password" name="confirm_password" id="pwd2" required placeholder="Repeat password">
+              <button type="button" class="pwd-toggle" onclick="togglePwd('pwd2',this)">👁</button>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-signup">Create Account →</button>
+      </form>
+
+      <div class="divider-or"><span>Already have an account?</span></div>
+      <div class="login-link"><a href="{% url 'login' %}">Sign in →</a></div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function updateRole() {
+  const r = document.querySelector('[name=role]:checked')?.value;
+  document.getElementById('workerSection').classList.toggle('show', r === 'worker');
+  document.getElementById('contractorSection').classList.toggle('show', r === 'contractor');
+}
+document.querySelectorAll('[name=role]').forEach(r => r.addEventListener('change', updateRole));
+updateRole();
+
+function togglePwd(id, btn) {
+  const f = document.getElementById(id);
+  f.type = f.type === 'password' ? 'text' : 'password';
+  btn.textContent = f.type === 'password' ? '👁' : '🙈';
+}
+
+document.getElementById('geoBtn').addEventListener('click', function () {
+  this.textContent = '📍 Detecting…';
+  this.disabled = true;
+  navigator.geolocation?.getCurrentPosition(
+    p => {
+      document.getElementById('lat').value = p.coords.latitude.toFixed(6);
+      document.getElementById('lng').value = p.coords.longitude.toFixed(6);
+      this.textContent = '✅ Location captured';
+      this.style.background = '#dcfce7';
+      this.style.color = '#166534';
+    },
+    () => { this.textContent = '📍 Could not detect'; this.disabled = false; }
+  );
+});
+</script>
+
 {% endblock %}

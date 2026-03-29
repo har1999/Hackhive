@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+
+{% block title %}Applicants for {{ job.title }} — KaamSetu{% endblock %}
+
+{% block content %}
+<div class="applicants-wrap">
+
+  <!-- Header -->
+  <div class="page-header">
+    <a href="{% url 'contractor_dashboard' %}" class="back-link">← Back to Dashboard</a>
+    <div class="header-top">
+      <div>
+        <h1 class="page-title">{{ job.title }}</h1>
+        <div class="job-meta">
+          <span>📍 {{ job.location_name }}</span>
+          <span>🔧 {{ job.skill_required|capfirst }}</span>
+          <span>💰 ₹{{ job.daily_rate }}/day</span>
+          <span>📅 {{ job.duration_days }} day{{ job.duration_days|pluralize }}</span>
+          <span>👷 {{ job.workers_needed }} needed</span>
+        </div>
+      </div>
+      {% if job.is_urgent %}
+        <span class="urgent-badge">🔴 URGENT</span>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Applicant Count -->
+  <div class="applicant-count">
+    <strong>{{ applicants.count }}</strong> applicant{{ applicants.count|pluralize }}
+    {% if applicants %}
+      — sorted by rating and experience
+    {% endif %}
+  </div>
+
+  <!-- Applicants List -->
+  {% if applicants %}
+    <div class="applicants-list">
+      {% for application in applicants %}
+        <div class="applicant-card {% if application.status == 'accepted' %}hired{% endif %}">
+
+          <!-- Avatar + Name -->
+          <div class="applicant-left">
+            <div class="avatar">{{ application.worker.name|first|upper }}</div>
+            <div class="applicant-info">
+              <a href="{% url 'honest_profile' application.worker.id %}"
+                class="worker-name" target="_blank">
+                {{ application.worker.name }}
+              </a>
+              <span class="worker-skill">{{ application.worker.primary_skill|capfirst }}</span>
+              <span class="worker-location">📍 {{ application.worker.location_name|default:"Location not set" }}</span>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="applicant-stats">
+            <div class="stat">
+              <span class="stat-val">
+                {% if application.avg_rating %}
+                  ★ {{ application.avg_rating|floatformat:1 }}
+                {% else %}
+                  —
+                {% endif %}
+              </span>
+              <span class="stat-label">Avg Rating</span>
+            </div>
+            <div class="stat">
+              <span class="stat-val">{{ application.completed_jobs|default:"0" }}</span>
+              <span class="stat-label">Jobs Done</span>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="applicant-actions">
+            {% if application.status == 'accepted' %}
+              <span class="hired-tag">✓ Hired</span>
+            {% else %}
+              <!-- Hire -->
+              <form method="post" action="{% url 'hire_worker' application.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-hire"
+                  onclick="return confirm('Hire {{ application.worker.name }} for this job?')">
+                  Hire
+                </button>
+              </form>
+            {% endif %}
+
+            <!-- Favourite toggle -->
+            <form method="post" action="{% url 'toggle_favourite' application.worker.id %}">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{% url 'job_applicants' job.id %}">
+              {% if application.worker.id in fav_ids %}
+                <button type="submit" class="btn-fav active" title="Remove from favourites">★</button>
+              {% else %}
+                <button type="submit" class="btn-fav" title="Add to favourites">☆</button>
+              {% endif %}
+            </form>
+
+            <!-- View Profile -->
+            <a href="{% url 'honest_profile' application.worker.id %}"
+              class="btn-profile" target="_blank">View Profile</a>
+          </div>
+
+        </div>
+      {% endfor %}
+    </div>
+
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">👷</div>
+      <p>No applications yet.</p>
+      <small>Workers matching your skill category will apply here.</small>
+    </div>
+  {% endif %}
+
+</div>
+
+<style>
+.applicants-wrap {
+  max-width: 900px; margin: 0 auto; padding: 2rem 1rem;
+}
+
+.back-link {
+  color: #1a73e8; text-decoration: none; font-size: 0.88rem;
+  display: inline-block; margin-bottom: 1rem;
+}
+.back-link:hover { text-decoration: underline; }
+
+.page-header { margin-bottom: 1.5rem; }
+
+.header-top {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; gap: 1rem; flex-wrap: wrap;
+}
+
+.page-title { font-size: 1.6rem; font-weight: 700; margin: 0 0 0.5rem; }
+
+.job-meta {
+  display: flex; flex-wrap: wrap; gap: 0.5rem 1.2rem;
+  font-size: 0.85rem; color: #555;
+}
+
+.urgent-badge {
+  background: #fdecea; color: #e53935;
+  border: 1px solid #e53935; border-radius: 8px;
+  padding: 0.3rem 0.8rem; font-size: 0.8rem; font-weight: 700;
+  white-space: nowrap; align-self: flex-start;
+}
+
+.alert {
+  padding: 0.75rem 1rem; border-radius: 8px;
+  margin-bottom: 1rem; font-size: 0.9rem;
+}
+.alert-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+.alert-error { background: #fdecea; color: #c62828; border: 1px solid #ef9a9a; }
+.alert-info { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+
+.applicant-count {
+  font-size: 0.9rem; color: #666; margin-bottom: 1.2rem;
+}
+.applicant-count strong { color: #222; }
+
+.applicants-list { display: flex; flex-direction: column; gap: 0.9rem; }
+
+.applicant-card {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 1rem;
+  border: 1px solid #e0e0e0; border-radius: 12px;
+  padding: 1.1rem 1.3rem; background: #fff;
+  transition: box-shadow 0.2s;
+}
+.applicant-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.08); }
+.applicant-card.hired { border-color: #66bb6a; background: #f1f8f1; }
+
+.applicant-left {
+  display: flex; align-items: center; gap: 0.9rem; flex: 1; min-width: 200px;
+}
+
+.avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: #1a73e8; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 1.1rem; flex-shrink: 0;
+}
+
+.applicant-info {
+  display: flex; flex-direction: column; gap: 0.2rem;
+}
+
+.worker-name {
+  font-weight: 700; font-size: 0.97rem;
+  color: #1a73e8; text-decoration: none;
+}
+.worker-name:hover { text-decoration: underline; }
+
+.worker-skill {
+  font-size: 0.78rem; color: #fff;
+  background: #1a73e8; padding: 0.15rem 0.5rem;
+  border-radius: 20px; display: inline-block; width: fit-content;
+}
+
+.worker-location { font-size: 0.78rem; color: #888; }
+
+.applicant-stats {
+  display: flex; gap: 1.5rem; align-items: center;
+}
+
+.stat {
+  display: flex; flex-direction: column; align-items: center; gap: 0.1rem;
+}
+.stat-val {
+  font-size: 1rem; font-weight: 700; color: #222;
+}
+.stat-label { font-size: 0.7rem; color: #999; text-transform: uppercase; letter-spacing: 0.03em; }
+
+.applicant-actions {
+  display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+}
+
+.btn-hire {
+  background: #1a73e8; color: #fff;
+  border: none; border-radius: 8px;
+  padding: 0.45rem 1.1rem; font-size: 0.88rem;
+  font-weight: 700; cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-hire:hover { background: #1558b0; }
+
+.hired-tag {
+  background: #e8f5e9; color: #2e7d32;
+  padding: 0.35rem 0.9rem; border-radius: 8px;
+  font-size: 0.85rem; font-weight: 700;
+}
+
+.btn-fav {
+  background: none; border: 1.5px solid #ddd;
+  border-radius: 8px; padding: 0.4rem 0.6rem;
+  font-size: 1.1rem; cursor: pointer; color: #bbb;
+  transition: all 0.2s; line-height: 1;
+}
+.btn-fav:hover, .btn-fav.active {
+  border-color: #ffc107; color: #ffc107;
+}
+
+.btn-profile {
+  border: 1.5px solid #ddd; color: #555;
+  padding: 0.4rem 0.8rem; border-radius: 8px;
+  text-decoration: none; font-size: 0.83rem;
+  transition: all 0.2s;
+}
+.btn-profile:hover { border-color: #1a73e8; color: #1a73e8; }
+
+.empty-state {
+  text-align: center; padding: 3rem 1rem;
+  background: #f9f9f9; border: 1px dashed #ccc;
+  border-radius: 12px; color: #888;
+}
+.empty-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+.empty-state p { font-size: 1rem; margin: 0 0 0.3rem; color: #555; }
+.empty-state small { font-size: 0.83rem; }
+</style>
+{% endblock %}

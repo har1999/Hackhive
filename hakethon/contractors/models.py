@@ -36,9 +36,7 @@ class ContractorProfile(models.Model):
     @property
     def average_rating(self):
         from django.db.models import Avg
-        result = self.user.ratings_received.filter(
-            direction='worker_to_contractor'
-        ).aggregate(avg=Avg('score'))
+        result = self.user.ratings_received.aggregate(avg=Avg('score'))
         return round(result['avg'] or 0, 1)
 
     @property

@@ -1,28 +1,239 @@
 {% extends 'base.html' %}
+{% block title %}Login — KaamSetu{% endblock %}
 {% block content %}
-<div class="auth-container">
-    <div class="auth-card">
-        <h1 class="brand-title">Kaam<span>Setu</span></h1>
-        <p class="auth-subtitle">Login to manage your jobs and profile.</p>
-        
-        <form method="POST" class="auth-form">
-            {% csrf_token %}
-            <input type="tel" name="phone" placeholder="Phone Number" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit" class="btn-primary">Login</button>
-        </form>
-      
-
-<p class="auth-footer">Don't have an account? <a href="{% url 'signup' %}" style="color: var(--orange); font-weight: bold;">Sign Up</a></p>
-    </div>
-</div>
 
 <style>
-    .auth-container { display: flex; justify-content: center; align-items: center; min-height: 80vh; }
-    .auth-card { background: white; padding: 2.5rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 400px; text-align: center; }
-    .brand-title { color: #374151; font-weight: 800; font-size: 2rem; }
-    .brand-title span { color: #f97316; }
-    .auth-form input { width: 100%; padding: 0.8rem; margin-bottom: 1rem; border: 1px solid #e5e7eb; border-radius: 10px; box-sizing: border-box; }
-    .btn-primary { width: 100%; background: #f97316; color: white; padding: 1rem; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+  .auth-wrap {
+    min-height: 90vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .auth-left {
+    background: #18120a;
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .auth-left::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 80%, rgba(249,115,22,.18) 0%, transparent 60%);
+  }
+  .auth-left-brand {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #f97316;
+    position: relative;
+    z-index: 1;
+  }
+  .auth-left-brand span { color: white; }
+  .auth-left-hero {
+    position: relative;
+    z-index: 1;
+  }
+  .auth-left-hero h2 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: white;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+  .auth-left-hero h2 em { color: #f97316; font-style: normal; }
+  .auth-left-hero p { color: rgba(255,255,255,.5); font-size: .9rem; line-height: 1.6; }
+  .auth-trust-list {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+    position: relative;
+    z-index: 1;
+  }
+  .auth-trust-item {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 999px;
+    padding: .5rem 1rem;
+    color: rgba(255,255,255,.75);
+    font-size: .82rem;
+  }
+  .auth-trust-item .ico {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(249,115,22,.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: .85rem;
+  }
+  .auth-right {
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+  .auth-box { width: 100%; max-width: 380px; }
+  .auth-title { font-size: 1.7rem; font-weight: 800; color: #18120a; margin-bottom: .25rem; }
+  .auth-title em { color: #f97316; font-style: normal; }
+  .auth-sub { color: #8a7060; font-size: .875rem; margin-bottom: 2rem; }
+  .form-field { margin-bottom: 1rem; }
+  .form-field label { display: block; font-size: .8rem; font-weight: 600; color: #44332a; margin-bottom: .35rem; }
+  .form-field input {
+    width: 100%;
+    padding: .7rem 1rem;
+    border: 1.5px solid #efe8df;
+    border-radius: 10px;
+    font-size: .95rem;
+    background: #fffaf6;
+    color: #18120a;
+    transition: border .15s, box-shadow .15s;
+    box-sizing: border-box;
+  }
+  .form-field input:focus {
+    outline: none;
+    border-color: #f97316;
+    box-shadow: 0 0 0 3px rgba(249,115,22,.12);
+    background: white;
+  }
+  .pwd-wrap { position: relative; }
+  .pwd-toggle {
+    position: absolute; right: .8rem; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; color: #8a7060; font-size: .9rem;
+    padding: .2rem;
+  }
+  .btn-login {
+    width: 100%;
+    padding: .8rem;
+    background: #f97316;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: .95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .15s;
+    margin-top: .5rem;
+  }
+  .btn-login:hover { background: #ea580c; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(249,115,22,.4); }
+  .auth-footer-link { text-align: center; margin-top: 1.25rem; font-size: .85rem; color: #8a7060; }
+  .auth-footer-link a { color: #f97316; font-weight: 700; text-decoration: none; }
+  .demo-box {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: #f8f2ec;
+    border-radius: 10px;
+    border: 1px dashed #efe8df;
+  }
+  .demo-box .demo-title {
+    font-size: .7rem;
+    font-weight: 700;
+    color: #8a7060;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: .5rem;
+  }
+  .demo-box p { font-size: .78rem; color: #44332a; margin-bottom: .2rem; }
+  .alert-error-box {
+    background: #fee2e2;
+    color: #991b1b;
+    border-left: 3px solid #dc2626;
+    padding: .75rem 1rem;
+    border-radius: 10px;
+    font-size: .85rem;
+    margin-bottom: 1rem;
+    display: flex;
+    gap: .4rem;
+    align-items: flex-start;
+  }
+  @media(max-width: 768px) {
+    .auth-wrap { grid-template-columns: 1fr; }
+    .auth-left { display: none; }
+    .auth-right { min-height: 100vh; }
+  }
 </style>
+
+<div class="auth-wrap">
+
+  <!-- LEFT PANEL -->
+  <div class="auth-left">
+    <div class="auth-left-brand">🏗️ Kaam<span>Setu</span></div>
+
+    <div class="auth-left-hero">
+      <h2>Trust built through<br><em>real work,</em><br>not claims.</h2>
+      <p>Construction workers build verified profiles through completed jobs. Contractors hire from a trust-sorted list.</p>
+    </div>
+
+    <div class="auth-trust-list">
+      <div class="auth-trust-item"><div class="ico">✅</div> Verified job histories — by real contractors</div>
+      <div class="auth-trust-item"><div class="ico">⭐</div> Ratings are permanent — no manipulation</div>
+      <div class="auth-trust-item"><div class="ico">🏅</div> Skill endorsements tied to specific jobs</div>
+      <div class="auth-trust-item"><div class="ico">🚨</div> Urgent jobs broadcast to nearby workers instantly</div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="auth-right">
+    <div class="auth-box">
+
+      <h1 class="auth-title">Welcome <em>back</em></h1>
+      <p class="auth-sub">Sign in to your KaamSetu account</p>
+
+      {% if messages %}
+        {% for msg in messages %}
+        <div class="alert-error-box">❌ {{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="POST" action="{% url 'login' %}">
+        {% csrf_token %}
+
+        <div class="form-field">
+          <label>📱 Mobile Number</label>
+          <input type="tel" name="phone" placeholder="10-digit mobile number"
+                 value="{{ phone|default:'' }}"
+                 inputmode="numeric" maxlength="15" required autofocus>
+        </div>
+
+        <div class="form-field">
+          <label>🔒 Password</label>
+          <div class="pwd-wrap">
+            <input type="password" name="password" id="pwdField"
+                   placeholder="Enter your password" required>
+            <button type="button" class="pwd-toggle" onclick="togglePwd('pwdField', this)">👁</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-login">Sign In →</button>
+      </form>
+
+      <div class="auth-footer-link">
+        Don't have an account? <a href="{% url 'signup' %}">Create one free →</a>
+      </div>
+
+      <div class="demo-box">
+        <div class="demo-title">Demo Accounts</div>
+        <p>👷 Worker: <strong>9876543201</strong> / <strong>demo1234</strong></p>
+        <p>🏢 Contractor: <strong>9876540001</strong> / <strong>demo1234</strong></p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePwd(fieldId, btn) {
+  const f = document.getElementById(fieldId);
+  f.type = f.type === 'password' ? 'text' : 'password';
+  btn.textContent = f.type === 'password' ? '👁' : '🙈';
+}
+</script>
+
 {% endblock %}

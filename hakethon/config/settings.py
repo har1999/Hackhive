@@ -73,8 +73,8 @@ DATABASES = {
     }
 }
 
+# --- THIS IS THE SECTION THAT WAS FIXED ---
 AUTHENTICATION_BACKENDS = [
-    'accounts.backends.PhoneAuthBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 
