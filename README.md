@@ -185,4 +185,4 @@ celery -A config worker -l info
 20 senior full-stack engineers specializing in:
 Django 5, DRF, PostgreSQL, Celery/Redis, PWA, Voice UI, Geolocation, SMS APIs
 
-**For IIT Madras Hackathon 2025 — Web Development Domain**
+**For Hackathon 2025 — Web Development Domain**
